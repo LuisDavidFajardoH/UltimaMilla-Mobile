@@ -16,9 +16,9 @@ const DeliveryIcon = (props) => (
 
 const DecorativeLines = () => {
   const translateY1 = new Animated.Value(0);
-  const scaleY1 = new Animated.Value(1);
+  const scale1 = new Animated.Value(1);
   const translateY2 = new Animated.Value(0);
-  const scaleY2 = new Animated.Value(1);
+  const scale2 = new Animated.Value(1);
 
   useEffect(() => {
     const animate = () => {
@@ -26,37 +26,25 @@ const DecorativeLines = () => {
         Animated.sequence([
           Animated.parallel([
             Animated.timing(translateY1, {
-              toValue: 30,
-              duration: 1500,
+              toValue: 40,
+              duration: 2000,
               useNativeDriver: true,
             }),
-            Animated.timing(scaleY1, {
-              toValue: 1.2,
-              duration: 750,
-              useNativeDriver: true,
-            }),
-          ]),
-          Animated.parallel([
-            Animated.timing(translateY1, {
-              toValue: -30,
-              duration: 1500,
-              useNativeDriver: true,
-            }),
-            Animated.timing(scaleY1, {
-              toValue: 0.8,
-              duration: 750,
+            Animated.timing(scale1, {
+              toValue: 1.3,
+              duration: 1000,
               useNativeDriver: true,
             }),
           ]),
           Animated.parallel([
             Animated.timing(translateY1, {
               toValue: 0,
-              duration: 1500,
+              duration: 2000,
               useNativeDriver: true,
             }),
-            Animated.timing(scaleY1, {
+            Animated.timing(scale1, {
               toValue: 1,
-              duration: 750,
+              duration: 1000,
               useNativeDriver: true,
             }),
           ]),
@@ -64,37 +52,25 @@ const DecorativeLines = () => {
         Animated.sequence([
           Animated.parallel([
             Animated.timing(translateY2, {
-              toValue: -30,
-              duration: 2000,
+              toValue: -40,
+              duration: 2500,
               useNativeDriver: true,
             }),
-            Animated.timing(scaleY2, {
-              toValue: 0.8,
-              duration: 1000,
-              useNativeDriver: true,
-            }),
-          ]),
-          Animated.parallel([
-            Animated.timing(translateY2, {
-              toValue: 30,
-              duration: 2000,
-              useNativeDriver: true,
-            }),
-            Animated.timing(scaleY2, {
-              toValue: 1.2,
-              duration: 1000,
+            Animated.timing(scale2, {
+              toValue: 0.7,
+              duration: 1250,
               useNativeDriver: true,
             }),
           ]),
           Animated.parallel([
             Animated.timing(translateY2, {
               toValue: 0,
-              duration: 2000,
+              duration: 2500,
               useNativeDriver: true,
             }),
-            Animated.timing(scaleY2, {
+            Animated.timing(scale2, {
               toValue: 1,
-              duration: 1000,
+              duration: 1250,
               useNativeDriver: true,
             }),
           ]),
@@ -109,24 +85,22 @@ const DecorativeLines = () => {
     <View style={styles.decorativeContainer}>
       <Animated.View 
         style={[
-          styles.decorativeLine1, 
+          styles.decorativeCircle1, 
           { 
             transform: [
               { translateY: translateY1 },
-              { scaleY: scaleY1 },
-              { rotate: '-10deg' }
+              { scale: scale1 }
             ] 
           }
         ]} 
       />
       <Animated.View 
         style={[
-          styles.decorativeLine2, 
+          styles.decorativeCircle2, 
           { 
             transform: [
               { translateY: translateY2 },
-              { scaleY: scaleY2 },
-              { rotate: '8deg' }
+              { scale: scale2 }
             ] 
           }
         ]} 
@@ -286,23 +260,23 @@ const styles = StyleSheet.create({
     height: '100%',
     zIndex: 0,
   },
-  decorativeLine1: {
+  decorativeCircle1: {
     position: 'absolute',
-    width: '150%',
-    height: 3,
-    backgroundColor: 'rgba(255, 94, 112, 0.15)',
-    top: '40%',
-    left: -100,
-    borderRadius: 1.5,
+    width: 150,
+    height: 150,
+    backgroundColor: 'rgba(255, 94, 112, 0.08)',
+    top: '35%',
+    left: -50,
+    borderRadius: 75,
   },
-  decorativeLine2: {
+  decorativeCircle2: {
     position: 'absolute',
-    width: '150%',
-    height: 3,
-    backgroundColor: 'rgba(255, 94, 112, 0.1)',
-    top: '60%',
-    right: -100,
-    borderRadius: 1.5,
+    width: 120,
+    height: 120,
+    backgroundColor: 'rgba(255, 94, 112, 0.05)',
+    top: '55%',
+    right: -30,
+    borderRadius: 60,
   },
   cardTitle: {
     marginBottom: 8,
