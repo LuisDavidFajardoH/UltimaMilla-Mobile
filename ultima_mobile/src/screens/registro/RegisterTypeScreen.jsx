@@ -51,18 +51,84 @@ const DecorativeLines = () => {
           Animated.parallel([
             Animated.timing(translateY1, {
               toValue: 0,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scaleY1, {
+              toValue: 1,
+              duration: 750,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]),
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(translateY2, {
+              toValue: -30,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scaleY2, {
+              toValue: 0.8,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(translateY2, {
+              toValue: 30,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scaleY2, {
+              toValue: 1.2,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(translateY2, {
+              toValue: 0,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scaleY2, {
+              toValue: 1,
+              duration: 1000,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]),
+      ]).start(() => animate());
+    };
+
+    animate();
+  }, []);
+
   return (
     <View style={styles.decorativeContainer}>
       <Animated.View 
         style={[
           styles.decorativeLine1, 
-          { transform: [{ rotate: '-10deg' }, { translateY: translateY1 }] }
+          { 
+            transform: [
+              { translateY: translateY1 },
+              { scaleY: scaleY1 },
+              { rotate: '-10deg' }
+            ] 
+          }
         ]} 
       />
       <Animated.View 
         style={[
           styles.decorativeLine2, 
-          { transform: [{ rotate: '8deg' }, { translateY: translateY2 }] }
+          { 
+            transform: [
+              { translateY: translateY2 },
+              { scaleY: scaleY2 },
+              { rotate: '8deg' }
+            ] 
+          }
         ]} 
       />
     </View>
@@ -223,18 +289,20 @@ const styles = StyleSheet.create({
   decorativeLine1: {
     position: 'absolute',
     width: '150%',
-    height: 2,
-    backgroundColor: 'rgba(255, 94, 112, 0.1)',
+    height: 3,
+    backgroundColor: 'rgba(255, 94, 112, 0.15)',
     top: '40%',
     left: -100,
+    borderRadius: 1.5,
   },
   decorativeLine2: {
     position: 'absolute',
     width: '150%',
-    height: 1,
-    backgroundColor: 'rgba(255, 94, 112, 0.08)',
+    height: 3,
+    backgroundColor: 'rgba(255, 94, 112, 0.1)',
     top: '60%',
     right: -100,
+    borderRadius: 1.5,
   },
   cardTitle: {
     marginBottom: 8,
