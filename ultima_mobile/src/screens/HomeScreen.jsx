@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Image, Alert } from 'react-native';
+import { StyleSheet, Image, Alert, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
 import { Button, Text, Layout, Input, Icon, Spinner } from '@ui-kitten/components';
 
 function HomeScreen({ navigation }) {
@@ -7,21 +7,27 @@ function HomeScreen({ navigation }) {
   const [password, setPassword] = useState('');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const toggleSecureEntry = () => {
     setSecureTextEntry(!secureTextEntry);
   };
 
   const EmailIcon = (props) => (
-    <Icon {...props} name='email'/>
+    <Icon {...props} name='email' style={[props.style, { tintColor: emailFocused ? '#FF5E70' : '#8F9BB3' }]}/>
   );
 
   const LockIcon = (props) => (
-    <Icon {...props} name='lock'/>
+    <Icon {...props} name='lock' style={[props.style, { tintColor: passwordFocused ? '#FF5E70' : '#8F9BB3' }]}/>
   );
 
   const PasswordIcon = (props) => (
-    <Icon {...props} name={secureTextEntry ? 'eye-off' : 'eye'} onPress={toggleSecureEntry}/>
+    <Icon {...props} 
+      name={secureTextEntry ? 'eye-off' : 'eye'} 
+      style={[props.style, { tintColor: passwordFocused ? '#FF5E70' : '#8F9BB3' }]}
+      onPress={toggleSecureEntry}
+    />
   );
 
   const handleLogin = async () => {
@@ -77,84 +83,102 @@ function HomeScreen({ navigation }) {
   };
 
   return (
-    <Layout style={styles.container}>
-      <Layout style={styles.topSection}>
-        <Layout style={styles.logoContainer}>
-          <Image
-            source={require('../../assets/logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text category="h1" style={styles.title}>¡Hola! 👋</Text>
-          <Text category="s1" style={styles.subtitle}>Gestiona tus envíos de forma fácil y segura</Text>
-        </Layout>
-      </Layout>
-
-      <Layout style={styles.bottomSection}>
-        <Layout style={styles.formContainer}>
-          <Text category="h6" style={styles.sectionTitle}>Iniciar Sesión</Text>
-          
-          <Input
-            placeholder="usuario@ejemplo.com"
-            value={email}
-            onChangeText={setEmail}
-            style={[styles.input, styles.emailInput]}
-            accessoryLeft={EmailIcon}
-            disabled={loading}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            label="Correo electrónico"
-            caption={email ? '' : 'Ingresa tu correo registrado'}
-          />
-
-          <Input
-            placeholder="••••••••"
-            value={password}
-            secureTextEntry={secureTextEntry}
-            onChangeText={setPassword}
-            accessoryRight={PasswordIcon}
-            accessoryLeft={LockIcon}
-            style={[styles.input, styles.passwordInput]}
-            disabled={loading}
-            label="Contraseña"
-            caption={password ? '' : 'Ingresa tu contraseña'}
-          />
-
-          <Button 
-            style={styles.loginButton}
-            onPress={handleLogin}
-            disabled={loading}
-            accessoryLeft={loading ? (props) => <Spinner size="small"/> : null}
-            size="large">
-            {loading ? 'INICIANDO SESIÓN...' : 'CONTINUAR'}
-          </Button>
-
-          <Button
-            appearance="ghost"
-            status="basic"
-            style={styles.forgotPassword}>
-            ¿Olvidaste tu contraseña? Recupérala aquí
-          </Button>
-
-          <Layout style={styles.registerContainer}>
-            <Text appearance="hint">¿No tienes una cuenta?</Text>
-            <Button
-              appearance="ghost"
-              status="primary"
-              onPress={() => navigation.navigate('Register')}
-              style={styles.registerButton}>
-              Regístrate aquí
-            </Button>
+    <KeyboardAvoidingView 
+      style={{ flex: 1 }}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
+    >
+      <ScrollView
+        bounces={false}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ flexGrow: 1 }}
+      >
+        <Layout style={styles.container}>
+          <Layout style={styles.topSection}>
+            <Layout style={styles.logoContainer}>
+              <Image
+                source={require('../../assets/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+              <Text category="h1" style={styles.title}>¡Hola! 👋</Text>
+              <Text category="s1" style={styles.subtitle}>Gestiona tus envíos de forma fácil y segura</Text>
+            </Layout>
           </Layout>
 
-          <Layout style={styles.footer}>
-            <Text appearance="hint" category="c1" style={styles.footerText}>
-              © 2024 99 Envíos - Todos los derechos reservados
-            </Text>
+          <Layout style={styles.bottomSection}>
+            <Layout style={styles.formContainer}>
+              <Text category="h6" style={styles.sectionTitle}>Iniciar Sesión</Text>
+              
+              <Input
+                placeholder="usuario@ejemplo.com"
+                value={email}
+                onChangeText={setEmail}
+                style={[styles.input, styles.emailInput]}
+                accessoryLeft={EmailIcon}
+                disabled={loading}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                label="Correo electrónico"
+                caption={email ? '' : 'Ingresa tu correo registrado'}
+                status='basic'
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
+              />
+
+              <Input
+                placeholder="••••••••"
+                value={password}
+                secureTextEntry={secureTextEntry}
+                onChangeText={setPassword}
+                accessoryRight={PasswordIcon}
+                accessoryLeft={LockIcon}
+                style={[styles.input, styles.passwordInput]}
+                disabled={loading}
+                label="Contraseña"
+                caption={password ? '' : 'Ingresa tu contraseña'}
+                status='basic'
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
+              />
+
+              <Button 
+                style={styles.loginButton}
+                onPress={handleLogin}
+                disabled={loading}
+                accessoryLeft={loading ? (props) => <Spinner size="small"/> : null}
+                size="large">
+                {loading ? 'INICIANDO SESIÓN...' : 'CONTINUAR'}
+              </Button>
+
+              <Button
+                appearance="ghost"
+                status="basic"
+                style={styles.forgotPassword}>
+                ¿Olvidaste tu contraseña? Recupérala aquí
+              </Button>
+
+              <Layout style={styles.registerContainer}>
+                <Text appearance="hint">¿No tienes una cuenta?</Text>
+                <Button
+                  appearance="ghost"
+                  status="primary"
+                  onPress={() => navigation.navigate('Register')}
+                  style={styles.registerButton}>
+                  Regístrate aquí
+                </Button>
+              </Layout>
+
+              <Layout style={styles.footer}>
+                <Text appearance="hint" category="c1" style={styles.footerText}>
+                  © 2024 99 Envíos - Todos los derechos reservados
+                </Text>
+              </Layout>
+            </Layout>
           </Layout>
         </Layout>
-      </Layout>
-    </Layout>
+      </ScrollView>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -186,7 +210,7 @@ const styles = StyleSheet.create({
   title: {
     marginBottom: 8,
     fontWeight: 'bold',
-    color: '#2E3A59',
+    color: '#0086FF',
     fontSize: 28,
   },
   subtitle: {
@@ -199,6 +223,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 24,
     paddingTop: 30,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 16, // Añadir padding extra en iOS
     backgroundColor: '#ffffff',
     borderTopLeftRadius: 30,
     borderTopRightRadius: 30,
@@ -220,7 +245,7 @@ const styles = StyleSheet.create({
   input: {
     borderRadius: 12,
     backgroundColor: '#ffffff',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#E4E9F2',
   },
   emailInput: {

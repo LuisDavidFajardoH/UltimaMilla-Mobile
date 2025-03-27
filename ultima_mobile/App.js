@@ -4,11 +4,22 @@ import { ApplicationProvider, IconRegistry } from '@ui-kitten/components';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import AppNavigator from './src/navigation/AppNavigator';
 
+const theme = {
+  ...eva.light,
+  colors: {
+    ...eva.light.colors,
+    primary: '#0086FF',
+    danger: '#FF5E70',
+    success: '#0086FF',
+    info: '#0086FF',
+  },
+};
+
 export default function App() {
   return (
     <>
       <IconRegistry icons={EvaIconsPack} />
-      <ApplicationProvider {...eva} theme={eva.light}>
+      <ApplicationProvider {...eva} theme={theme}>
         <AppNavigator />
       </ApplicationProvider>
     </>

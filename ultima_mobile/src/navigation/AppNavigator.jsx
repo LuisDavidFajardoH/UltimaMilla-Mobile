@@ -33,7 +33,10 @@ function AppNavigator() {
         <Stack.Screen 
           name="Register" 
           component={RegisterTypeScreen}
-          options={{ title: 'Registro' }}
+          options={{ 
+            title: 'Registro',
+            headerShown: false // Ocultamos el header porque ya tenemos uno personalizado
+          }}
         />
       </Stack.Navigator>
     </NavigationContainer>
