@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Image, Alert, KeyboardAvoidingView, ScrollView, Platform } from 'react-native';
+import { StyleSheet, Image, Alert, KeyboardAvoidingView, ScrollView, Platform, Linking } from 'react-native';
 import { Button, Text, Layout, Input, Icon, Spinner } from '@ui-kitten/components';
 
 function HomeScreen({ navigation }) {
@@ -82,6 +82,10 @@ function HomeScreen({ navigation }) {
     }
   };
 
+  const handleForgotPassword = () => {
+    Linking.openURL('https://api.99envios.app/formulario-recuperar-contrasenia');
+  };
+
   return (
     <KeyboardAvoidingView 
       style={{ flex: 1 }}
@@ -154,7 +158,8 @@ function HomeScreen({ navigation }) {
               <Button
                 appearance="ghost"
                 status="basic"
-                style={styles.forgotPassword}>
+                style={styles.forgotPassword}
+                onPress={handleForgotPassword}>
                 ¿Olvidaste tu contraseña? Recupérala aquí
               </Button>
 

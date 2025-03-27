@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { StyleSheet, Image, Platform, View, Animated } from 'react-native';
+import { StyleSheet, Image, Platform, View, Animated, Alert } from 'react-native';
 import { Button, Text, Layout, Icon, Card } from '@ui-kitten/components';
 
 const BusinessIcon = (props) => (
@@ -166,36 +166,42 @@ export const RegisterTypeScreen = ({ navigation }) => {
       </Layout>
 
       <Layout style={styles.cardsContainer}>
-        <Card style={[styles.optionCard, styles.leftCard]} onPress={() => navigation.navigate('RegisterBusiness')}>
-          <BusinessIcon/>
-          <Layout style={styles.cardContent}>
-            <Text category='h6' style={styles.cardTitle}>Sucursal</Text>
-            <Text style={styles.cardDescription}>
-              Gestiona envíos y entregas eficientemente
-            </Text>
+        <Card style={[styles.optionCard, styles.leftCard]}>
+          <Layout style={styles.cardInnerContainer}>
+            <Layout style={styles.cardTopContent}>
+              <BusinessIcon/>
+              <Text category='h6' style={styles.cardTitle}>Sucursal</Text>
+              <Text style={styles.cardDescription}>
+                Gestiona envíos y entregas eficientemente
+              </Text>
+            </Layout>
             <Button 
-              size='small'
+              size='large'
               style={styles.cardButton} 
               status='primary'
-              children={'Registrar Sucursal'}
-            />
+              onPress={() => navigation.navigate('RegisterBusiness')}>
+              Ir
+            </Button>
           </Layout>
         </Card>
 
-        <Card style={[styles.optionCard, styles.rightCard]} onPress={() => navigation.navigate('RegisterDelivery')}>
-          <DeliveryIcon/>
-          <Layout style={styles.cardContent}>
-            <Text category='h6' style={styles.cardTitle}>Repartidor</Text>
-            <Text style={styles.cardDescription}>
-              Únete y genera ingresos extra
-            </Text>
+        <Card style={[styles.optionCard, styles.rightCard]}>
+          <Layout style={styles.cardInnerContainer}>
+            <Layout style={styles.cardTopContent}>
+              <DeliveryIcon/>
+              <Text category='h6' style={styles.cardTitle}>Repartidor</Text>
+              <Text style={styles.cardDescription}>
+                Únete y genera ingresos extra
+              </Text>
+            </Layout>
             <Button 
-              size='small'
-              style={styles.cardButton} 
+              size='large'
+              style={styles.cardButton}
               appearance='outline' 
               status='primary'
-              children={'Registrar Repartidor'}
-            />
+              onPress={() => Alert.alert('Próximamente', 'Esta funcionalidad estará disponible pronto')}>
+              Ir
+            </Button>
           </Layout>
         </Card>
       </Layout>
@@ -248,16 +254,17 @@ const styles = StyleSheet.create({
   cardsContainer: {
     flexDirection: 'row',
     justifyContent: 'center',
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     backgroundColor: 'transparent',
   },
   optionCard: {
     flex: 1,
     margin: 8,
     borderRadius: 16,
-    padding: 16,
-    maxWidth: '47%', // Aumentado de 45% a 47%
-    minWidth: '45%',
+    padding: 20,
+    maxWidth: '44%',
+    minWidth: '44%',
+    backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: {
       width: 0,
@@ -266,9 +273,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 3.84,
     elevation: 5,
-    overflow: 'hidden', // Importante para el elemento decorativo
-    backgroundColor: '#fff',
-    zIndex: 1,
   },
   leftCard: {
     marginRight: 4,
@@ -277,17 +281,17 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: 'rgba(0, 134, 255, 0.1)', // Cambiado a azul con opacidad
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   icon: {
-    width: 28,
-    height: 28,
+    width: 32,
+    height: 32,
     tintColor: '#0086FF', // Cambiado a azul
   },
   cardContent: {
@@ -327,24 +331,34 @@ const styles = StyleSheet.create({
     borderRadius: 90,
   },
   cardTitle: {
-    marginBottom: 8,
+    marginBottom: 12,
     color: '#2E3A59',
     fontWeight: '600',
-    fontSize: 18,
+    fontSize: 20,
   },
   cardDescription: {
     color: '#8F9BB3',
-    marginBottom: 16,
-    fontSize: 13,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
     borderLeftWidth: 2,
     borderLeftColor: '#FF5E70',
-    paddingLeft: 8,
+    paddingLeft: 12,
+    marginBottom: 8,
   },
   cardButton: {
-    borderRadius: 8,
-    minHeight: 40,
-    paddingHorizontal: 8,
+    borderRadius: 12,
+    marginTop: 8,
+    height: 48,
+  },
+  cardInnerContainer: {
+    minHeight: 220,
+    justifyContent: 'space-between',
+    backgroundColor: 'transparent',
+  },
+  cardTopContent: {
+    backgroundColor: 'transparent',
+    alignItems: 'flex-start',
+    marginBottom: 20,
   },
   footer: {
     padding: 24,
