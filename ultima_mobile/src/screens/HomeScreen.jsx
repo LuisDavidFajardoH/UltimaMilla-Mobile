@@ -78,54 +78,81 @@ function HomeScreen({ navigation }) {
 
   return (
     <Layout style={styles.container}>
-      <Layout style={styles.logoContainer}>
-        <Image
-          source={require('../../assets/logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        <Text category="h1" style={styles.title}>¡Bienvenido!</Text>
-        <Text category="s1" style={styles.subtitle}>Inicia sesión para continuar</Text>
+      <Layout style={styles.topSection}>
+        <Layout style={styles.logoContainer}>
+          <Image
+            source={require('../../assets/logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text category="h1" style={styles.title}>¡Hola! 👋</Text>
+          <Text category="s1" style={styles.subtitle}>Gestiona tus envíos de forma fácil y segura</Text>
+        </Layout>
       </Layout>
 
-      <Layout style={styles.formContainer}>
-        <Input
-          placeholder="Correo electrónico"
-          value={email}
-          onChangeText={setEmail}
-          style={styles.input}
-          accessoryLeft={EmailIcon}
-          disabled={loading}
-          keyboardType="email-address"
-          autoCapitalize="none"
-        />
+      <Layout style={styles.bottomSection}>
+        <Layout style={styles.formContainer}>
+          <Text category="h6" style={styles.sectionTitle}>Iniciar Sesión</Text>
+          
+          <Input
+            placeholder="usuario@ejemplo.com"
+            value={email}
+            onChangeText={setEmail}
+            style={[styles.input, styles.emailInput]}
+            accessoryLeft={EmailIcon}
+            disabled={loading}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            label="Correo electrónico"
+            caption={email ? '' : 'Ingresa tu correo registrado'}
+          />
 
-        <Input
-          placeholder="Contraseña"
-          value={password}
-          secureTextEntry={secureTextEntry}
-          onChangeText={setPassword}
-          accessoryRight={PasswordIcon}
-          accessoryLeft={LockIcon}
-          style={styles.input}
-          disabled={loading}
-        />
+          <Input
+            placeholder="••••••••"
+            value={password}
+            secureTextEntry={secureTextEntry}
+            onChangeText={setPassword}
+            accessoryRight={PasswordIcon}
+            accessoryLeft={LockIcon}
+            style={[styles.input, styles.passwordInput]}
+            disabled={loading}
+            label="Contraseña"
+            caption={password ? '' : 'Ingresa tu contraseña'}
+          />
 
-        <Button 
-          style={styles.loginButton}
-          onPress={handleLogin}
-          disabled={loading}
-          accessoryLeft={loading ? (props) => <Spinner size="small"/> : null}>
-          {loading ? 'CARGANDO' : 'INICIAR SESIÓN'}
-        </Button>
+          <Button 
+            style={styles.loginButton}
+            onPress={handleLogin}
+            disabled={loading}
+            accessoryLeft={loading ? (props) => <Spinner size="small"/> : null}
+            size="large">
+            {loading ? 'INICIANDO SESIÓN...' : 'CONTINUAR'}
+          </Button>
 
-        <Button
-          appearance="ghost"
-          status="basic"
-          style={styles.forgotPassword}
-          disabled={loading}>
-          ¿Olvidaste tu contraseña?
-        </Button>
+          <Button
+            appearance="ghost"
+            status="basic"
+            style={styles.forgotPassword}>
+            ¿Olvidaste tu contraseña? Recupérala aquí
+          </Button>
+
+          <Layout style={styles.registerContainer}>
+            <Text appearance="hint">¿No tienes una cuenta?</Text>
+            <Button
+              appearance="ghost"
+              status="primary"
+              onPress={() => navigation.navigate('Register')}
+              style={styles.registerButton}>
+              Regístrate aquí
+            </Button>
+          </Layout>
+
+          <Layout style={styles.footer}>
+            <Text appearance="hint" category="c1" style={styles.footerText}>
+              © 2024 99 Envíos - Todos los derechos reservados
+            </Text>
+          </Layout>
+        </Layout>
       </Layout>
     </Layout>
   );
@@ -134,48 +161,106 @@ function HomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
+    backgroundColor: '#f8f9fc',
+  },
+  topSection: {
+    flex: 0.4,
+    backgroundColor: '#f8f9fc',
+    justifyContent: 'center',
+  },
+  bottomSection: {
+    flex: 0.6,
+    backgroundColor: 'transparent',
   },
   logoContainer: {
-    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: 'transparent',
-    marginTop: 50, // Añadimos este marginTop
+    paddingVertical: 20,
   },
   logo: {
-    width: 150,
-    height: 150,
-    marginBottom: 20,
+    width: 120,
+    height: 120,
+    marginBottom: 16,
   },
   title: {
-    marginBottom: 10,
+    marginBottom: 8,
     fontWeight: 'bold',
+    color: '#2E3A59',
+    fontSize: 28,
   },
   subtitle: {
     color: '#8F9BB3',
-    marginBottom: 30,
+    textAlign: 'center',
+    paddingHorizontal: 20,
+    fontSize: 14,
   },
   formContainer: {
-    flex: 2,
-    paddingHorizontal: 20,
-    backgroundColor: 'transparent',
+    flex: 1,
+    paddingHorizontal: 24,
+    paddingTop: 30,
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: -3,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 4.84,
+    elevation: 5,
+  },
+  sectionTitle: {
+    marginBottom: 24,
+    color: '#2E3A59',
+    fontWeight: '600',
+    fontSize: 20,
   },
   input: {
-    marginBottom: 15,
-    borderRadius: 10,
+    borderRadius: 12,
     backgroundColor: '#ffffff',
     borderWidth: 2,
-    borderColor: '#e8ecef',
+    borderColor: '#E4E9F2',
+  },
+  emailInput: {
+    marginBottom: 16,
+  },
+  passwordInput: {
+    marginBottom: 24,
   },
   loginButton: {
-    marginTop: 20,
-    borderRadius: 10,
-    marginBottom: 15,
-    backgroundImage: 'linear-gradient(135deg, #639aff 0%, #5468ff 100%)',
+    marginTop: 8,
+    borderRadius: 12,
+    marginBottom: 16,
+    backgroundColor: '#639aff',
+    borderColor: 'transparent',
+    padding: 12,
   },
   forgotPassword: {
-    marginTop: 10,
+    marginTop: 8,
+  },
+  registerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    marginTop: 16,
+  },
+  registerButton: {
+    marginLeft: 8,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  footerText: {
+    fontSize: 12,
+    color: '#8F9BB3',
   },
 });
 
