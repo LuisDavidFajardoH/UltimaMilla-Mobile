@@ -19,6 +19,8 @@ const DecorativeLines = () => {
   const scale1 = new Animated.Value(1);
   const translateY2 = new Animated.Value(0);
   const scale2 = new Animated.Value(1);
+  const translateY3 = new Animated.Value(0);
+  const scale3 = new Animated.Value(1);
 
   useEffect(() => {
     const animate = () => {
@@ -75,6 +77,32 @@ const DecorativeLines = () => {
             }),
           ]),
         ]),
+        Animated.sequence([
+          Animated.parallel([
+            Animated.timing(translateY3, {
+              toValue: 30,
+              duration: 3000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scale3, {
+              toValue: 1.2,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+          ]),
+          Animated.parallel([
+            Animated.timing(translateY3, {
+              toValue: 0,
+              duration: 3000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(scale3, {
+              toValue: 1,
+              duration: 1500,
+              useNativeDriver: true,
+            }),
+          ]),
+        ]),
       ]).start(() => animate());
     };
 
@@ -101,6 +129,17 @@ const DecorativeLines = () => {
             transform: [
               { translateY: translateY2 },
               { scale: scale2 }
+            ] 
+          }
+        ]} 
+      />
+      <Animated.View 
+        style={[
+          styles.decorativeCircle3, 
+          { 
+            transform: [
+              { translateY: translateY3 },
+              { scale: scale3 }
             ] 
           }
         ]} 
@@ -277,6 +316,15 @@ const styles = StyleSheet.create({
     top: '55%',
     right: -30,
     borderRadius: 60,
+  },
+  decorativeCircle3: {
+    position: 'absolute',
+    width: 180,
+    height: 180,
+    backgroundColor: 'rgba(0, 134, 255, 0.08)',
+    bottom: '15%', // Cambiado de 5% a 15% para subirlo
+    right: -60,
+    borderRadius: 90,
   },
   cardTitle: {
     marginBottom: 8,
