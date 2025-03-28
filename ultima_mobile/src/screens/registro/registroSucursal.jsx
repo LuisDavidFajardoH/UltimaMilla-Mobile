@@ -332,7 +332,85 @@ export const RegisterBusinessScreen = ({ navigation }) => {
     }
   };
 
+  const validateStep = (step) => {
+    switch (step) {
+      case 1:
+        if (!formData.pais) {
+          Alert.alert('Error', 'Por favor seleccione un país');
+          return false;
+        }
+        if (!formData.nombre_sucursal) {
+          Alert.alert('Error', 'Por favor ingrese el nombre del negocio');
+          return false;
+        }
+        if (!formData.direccion_negocio) {
+          Alert.alert('Error', 'Por favor ingrese la dirección del negocio');
+          return false;
+        }
+        if (!formData.ciudad) {
+          Alert.alert('Error', 'Por favor seleccione una ciudad');
+          return false;
+        }
+        if (!formData.nombre) {
+          Alert.alert('Error', 'Por favor ingrese su nombre');
+          return false;
+        }
+        if (!formData.apellido) {
+          Alert.alert('Error', 'Por favor ingrese su apellido');
+          return false;
+        }
+        if (!formData.tipo_identificacion) {
+          Alert.alert('Error', 'Por favor seleccione el tipo de identificación');
+          return false;
+        }
+        if (!formData.num_identificacion) {
+          Alert.alert('Error', 'Por favor ingrese su número de identificación');
+          return false;
+        }
+        if (!formData.email) {
+          Alert.alert('Error', 'Por favor ingrese su correo electrónico');
+          return false;
+        }
+        if (!formData.telefono) {
+          Alert.alert('Error', 'Por favor ingrese su número de teléfono');
+          return false;
+        }
+        break;
+
+      case 2:
+        if (!formData.categoria_principal) {
+          Alert.alert('Error', 'Por favor seleccione la categoría principal de productos');
+          return false;
+        }
+        if (!formData.volumen_estimado) {
+          Alert.alert('Error', 'Por favor seleccione el volumen estimado mensual');
+          return false;
+        }
+        break;
+
+      case 3:
+        if (!formData.password || formData.password.length < 8) {
+          Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
+          return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          Alert.alert('Error', 'Las contraseñas no coinciden');
+          return false;
+        }
+        if (!formData.termsAccepted) {
+          Alert.alert('Error', 'Debe aceptar los términos y condiciones');
+          return false;
+        }
+        break;
+    }
+    return true;
+  };
+
   const handleNext = () => {
+    if (!validateStep(currentStep)) {
+      return;
+    }
+    
     if (currentStep < 3) {
       setCurrentStep(prev => prev + 1);
     } else {
