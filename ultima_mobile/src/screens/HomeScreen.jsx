@@ -3,6 +3,7 @@ import { StyleSheet, Image, Alert, KeyboardAvoidingView, ScrollView, Platform, L
 import { Button, Text, Layout, Input, Icon, Spinner } from '@ui-kitten/components';
 import { CustomAlert } from '../components/Alert/CustomAlert';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { authService } from '../services/authService';
 
 function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -72,29 +73,53 @@ function HomeScreen({ navigation }) {
         })
       });
 
-      const userData = await response.json();
+      const data = await response.json();
+      console.log('Login Response:', data);
 
       if (!response.ok) {
-        throw new Error(userData.message || 'Error en el servidor');
+        throw new Error(data.message || 'Error en el servidor');
       }
 
+      // Preparar los datos del usuario con la nueva estructura
+      const userData = {
+        id: data.user.id,
+        email: data.user.email,
+        id_rol: data.user.id_rol,
+        token: data.token, // El token está en la raíz del objeto
+        sucursales: data.sucursales || [] // Las sucursales están en la raíz del objeto
+      };
+
+      // Guardar datos de autenticación
+      await authService.setAuthData(userData);
+
       // Navegar según el rol
-      switch(userData.user.id_rol) {
+      switch(data.user.id_rol) {
         case 1:
-          navigation.navigate('Admin');
+          navigation.replace('Admin');
           break;
         case 2:
         case 4:
-          navigation.navigate('Conductor');
+          navigation.replace('Conductor');
           break;
         case 3:
-          navigation.navigate('Tablero');
+          // Si tiene sucursales, navegar al tablero
+          if (data.sucursales && data.sucursales.length > 0) {
+            navigation.replace('Tablero', { 
+              sucursal: data.sucursales[0] 
+            });
+          } else {
+            showAlert('Error', 'No tiene sucursales asignadas', 'danger');
+          }
           break;
         default:
-          Alert.alert('Error', 'Rol no reconocido');
+          showAlert('Error', 'Rol no reconocido', 'danger');
       }
     } catch (error) {
-      console.error('Error details:', error);
+      console.error('Login Error:', {
+        message: error.message,
+        stack: error.stack
+      });
+      
       showAlert(
         'Error de inicio de sesión',
         'Credenciales incorrectas. Por favor intente nuevamente.',
