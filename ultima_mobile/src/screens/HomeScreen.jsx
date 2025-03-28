@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StyleSheet, Image, Alert, KeyboardAvoidingView, ScrollView, Platform, Linking } from 'react-native';
 import { Button, Text, Layout, Input, Icon, Spinner } from '@ui-kitten/components';
+import { CustomAlert } from '../components/Alert/CustomAlert';
 
 function HomeScreen({ navigation }) {
   const [email, setEmail] = useState('');
@@ -9,6 +10,12 @@ function HomeScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [emailFocused, setEmailFocused] = useState(false);
   const [passwordFocused, setPasswordFocused] = useState(false);
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    status: 'primary'
+  });
 
   const toggleSecureEntry = () => {
     setSecureTextEntry(!secureTextEntry);
@@ -30,9 +37,22 @@ function HomeScreen({ navigation }) {
     />
   );
 
+  const showAlert = (title, message, status = 'primary') => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      status
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig(prev => ({...prev, visible: false}));
+  };
+
   const handleLogin = async () => {
     if (!email || !password) {
-      Alert.alert('Error', 'Por favor complete todos los campos');
+      showAlert('Error', 'Por favor complete todos los campos', 'danger');
       return;
     }
 
@@ -73,9 +93,10 @@ function HomeScreen({ navigation }) {
       }
     } catch (error) {
       console.error('Error details:', error);
-      Alert.alert(
+      showAlert(
         'Error de inicio de sesión',
-        'Credenciales incorrectas. Por favor intente nuevamente.'
+        'Credenciales incorrectas. Por favor intente nuevamente.',
+        'danger'
       );
     } finally {
       setLoading(false);
@@ -183,6 +204,13 @@ function HomeScreen({ navigation }) {
           </Layout>
         </Layout>
       </ScrollView>
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        status={alertConfig.status}
+        onBackdropPress={hideAlert}
+      />
     </KeyboardAvoidingView>
   );
 }

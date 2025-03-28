@@ -3,6 +3,7 @@ import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView, Alert, Linking 
 import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, CheckBox } from '@ui-kitten/components';
 import CustomSelect from '../../components/Select/select';
 import Ciudades from '../../ciudades/ciudades';
+import { CustomAlert } from '../../components/Alert/CustomAlert';
 
 const tiposIdentificacion = [
   { label: 'Cédula de Ciudadanía', value: 'CC' },
@@ -45,6 +46,25 @@ export const RegisterBusinessScreen = ({ navigation }) => {
     confirmPassword: '',
     termsAccepted: false,
   });
+  const [alertConfig, setAlertConfig] = useState({
+    visible: false,
+    title: '',
+    message: '',
+    status: 'primary'
+  });
+
+  const showAlert = (title, message, status = 'primary') => {
+    setAlertConfig({
+      visible: true,
+      title,
+      message,
+      status
+    });
+  };
+
+  const hideAlert = () => {
+    setAlertConfig(prev => ({...prev, visible: false}));
+  };
 
   const BackIcon = (props) => (
     <Icon {...props} name='arrow-back'/>
@@ -249,16 +269,6 @@ export const RegisterBusinessScreen = ({ navigation }) => {
   );
 
   const handleSubmit = async () => {
-    if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Error', 'Las contraseñas no coinciden');
-      return;
-    }
-
-    if (!formData.termsAccepted) {
-      Alert.alert('Error', 'Debes aceptar los términos y condiciones');
-      return;
-    }
-
     try {
       // Transform form data to match API requirements
       const apiData = {
@@ -291,10 +301,9 @@ export const RegisterBusinessScreen = ({ navigation }) => {
       });
 
       const data = await response.json();
-      console.log('API Response:', data); // Agregar este log
+      console.log('API Response:', data);
 
       if (!response.ok) {
-        // Mostrar el mensaje de error específico de la API
         const errorMessage = data.message || 
                            (typeof data.error === 'string' ? data.error : JSON.stringify(data.error)) ||
                            'Error en el registro';
@@ -305,19 +314,21 @@ export const RegisterBusinessScreen = ({ navigation }) => {
           message: errorMessage
         });
         
-        throw new Error(errorMessage);
+        showAlert('Error', errorMessage, 'danger');
+        return;
       }
 
-      Alert.alert(
-        '¡Registro Exitoso!',
+      showAlert(
+        '¡Registro Exitoso!', 
         'Tu cuenta ha sido creada correctamente',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.replace('99 Envios'),
-          },
-        ]
+        'success'
       );
+
+      // Navegar después de que el usuario cierre el alert
+      setTimeout(() => {
+        navigation.replace('99 Envios');
+      }, 1500);
+
     } catch (error) {
       console.error('Full error details:', {
         message: error.message,
@@ -325,9 +336,10 @@ export const RegisterBusinessScreen = ({ navigation }) => {
         originalError: error
       });
       
-      Alert.alert(
+      showAlert(
         'Error',
-        `Error al registrar: ${error.message}. Por favor intente nuevamente.`
+        `Error al registrar: ${error.message}. Por favor intente nuevamente.`,
+        'danger'
       );
     }
   };
@@ -336,69 +348,69 @@ export const RegisterBusinessScreen = ({ navigation }) => {
     switch (step) {
       case 1:
         if (!formData.pais) {
-          Alert.alert('Error', 'Por favor seleccione un país');
+          showAlert('Campo Requerido', 'Por favor seleccione un país', 'warning');
           return false;
         }
         if (!formData.nombre_sucursal) {
-          Alert.alert('Error', 'Por favor ingrese el nombre del negocio');
+          showAlert('Campo Requerido', 'Por favor ingrese el nombre del negocio', 'warning');
           return false;
         }
         if (!formData.direccion_negocio) {
-          Alert.alert('Error', 'Por favor ingrese la dirección del negocio');
+          showAlert('Campo Requerido', 'Por favor ingrese la dirección del negocio', 'warning');
           return false;
         }
         if (!formData.ciudad) {
-          Alert.alert('Error', 'Por favor seleccione una ciudad');
+          showAlert('Campo Requerido', 'Por favor seleccione una ciudad', 'warning');
           return false;
         }
         if (!formData.nombre) {
-          Alert.alert('Error', 'Por favor ingrese su nombre');
+          showAlert('Campo Requerido', 'Por favor ingrese su nombre', 'warning');
           return false;
         }
         if (!formData.apellido) {
-          Alert.alert('Error', 'Por favor ingrese su apellido');
+          showAlert('Campo Requerido', 'Por favor ingrese su apellido', 'warning');
           return false;
         }
         if (!formData.tipo_identificacion) {
-          Alert.alert('Error', 'Por favor seleccione el tipo de identificación');
+          showAlert('Campo Requerido', 'Por favor seleccione el tipo de identificación', 'warning');
           return false;
         }
         if (!formData.num_identificacion) {
-          Alert.alert('Error', 'Por favor ingrese su número de identificación');
+          showAlert('Campo Requerido', 'Por favor ingrese su número de identificación', 'warning');
           return false;
         }
         if (!formData.email) {
-          Alert.alert('Error', 'Por favor ingrese su correo electrónico');
+          showAlert('Campo Requerido', 'Por favor ingrese su correo electrónico', 'warning');
           return false;
         }
         if (!formData.telefono) {
-          Alert.alert('Error', 'Por favor ingrese su número de teléfono');
+          showAlert('Campo Requerido', 'Por favor ingrese su número de teléfono', 'warning');
           return false;
         }
         break;
 
       case 2:
         if (!formData.categoria_principal) {
-          Alert.alert('Error', 'Por favor seleccione la categoría principal de productos');
+          showAlert('Campo Requerido', 'Por favor seleccione la categoría principal de productos', 'warning');
           return false;
         }
         if (!formData.volumen_estimado) {
-          Alert.alert('Error', 'Por favor seleccione el volumen estimado mensual');
+          showAlert('Campo Requerido', 'Por favor seleccione el volumen estimado mensual', 'warning');
           return false;
         }
         break;
 
       case 3:
         if (!formData.password || formData.password.length < 8) {
-          Alert.alert('Error', 'La contraseña debe tener al menos 8 caracteres');
+          showAlert('Error', 'La contraseña debe tener al menos 8 caracteres', 'danger');
           return false;
         }
         if (formData.password !== formData.confirmPassword) {
-          Alert.alert('Error', 'Las contraseñas no coinciden');
+          showAlert('Error', 'Las contraseñas no coinciden', 'danger');
           return false;
         }
         if (!formData.termsAccepted) {
-          Alert.alert('Error', 'Debe aceptar los términos y condiciones');
+          showAlert('Error', 'Debe aceptar los términos y condiciones', 'danger');
           return false;
         }
         break;
@@ -465,6 +477,13 @@ export const RegisterBusinessScreen = ({ navigation }) => {
           </Button>
         </Layout>
       </ScrollView>
+      <CustomAlert
+        visible={alertConfig.visible}
+        title={alertConfig.title}
+        message={alertConfig.message}
+        status={alertConfig.status}
+        onBackdropPress={hideAlert}
+      />
     </KeyboardAvoidingView>
   );
 };
