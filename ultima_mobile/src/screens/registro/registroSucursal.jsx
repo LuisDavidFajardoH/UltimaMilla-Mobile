@@ -1,18 +1,29 @@
 import React, { useState } from 'react';
-import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView } from 'react-native';
-import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, SelectItem } from '@ui-kitten/components';
+import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView, Alert, Linking } from 'react-native';
+import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, CheckBox } from '@ui-kitten/components';
 import CustomSelect from '../../components/Select/select';
+import Ciudades from '../../ciudades/ciudades';
 
 const tiposIdentificacion = [
-  { id: 'CC', text: 'Cédula de Ciudadanía' },
-  { id: 'CE', text: 'Cédula de Extranjería' },
-  { id: 'NIT', text: 'NIT' },
+  { label: 'Cédula de Ciudadanía', value: 'CC' },
+  { label: 'Cédula de Extranjería', value: 'CE' },
+  { label: 'Tarjeta de Identidad', value: 'TI' }
 ];
 
-const ciudades = [
-  { id: '1', text: 'Bogotá' },
-  { id: '2', text: 'Medellín' },
-  { id: '3', text: 'Cali' },
+const categorias = [
+  { id: '1', text: 'Ropa y Accesorios' },
+  { id: '2', text: 'Tecnología' },
+  { id: '3', text: 'Alimentos y Bebidas' },
+  { id: '4', text: 'Cosméticos y Belleza' },
+  { id: '5', text: 'Libros y Papelería' },
+  { id: '6', text: 'Hogar y Decoración' },
+  { id: '7', text: 'Otros' },
+];
+
+const volumenPaquetes = [
+  { id: '1', text: '1 a 100 paquetes', value: '1-100' },
+  { id: '2', text: 'Entre 100 y 4.000 paquetes', value: '100-4000' },
+  { id: '3', text: 'Más de 4.000 paquetes', value: '4000+' },
 ];
 
 export const RegisterBusinessScreen = ({ navigation }) => {
@@ -28,6 +39,11 @@ export const RegisterBusinessScreen = ({ navigation }) => {
     num_identificacion: '',
     email: '',
     telefono: '',
+    categoria_principal: '',
+    volumen_estimado: '',
+    password: '',
+    confirmPassword: '',
+    termsAccepted: false,
   });
 
   const BackIcon = (props) => (
@@ -80,7 +96,25 @@ export const RegisterBusinessScreen = ({ navigation }) => {
         placeholder='Selecciona tu ciudad'
         value={formData.ciudad}
         onSelect={(value) => setFormData({...formData, ciudad: value})}
-        options={ciudades.map(c => ({ label: c.text, value: c.id }))}
+        options={Ciudades}
+      />
+
+      <Text category='h6' style={styles.sectionTitle}>Información del Negocio</Text>
+
+      <CustomSelect
+        label='Categoría Principal de Productos'
+        placeholder='Selecciona una categoría'
+        value={formData.categoria_principal}
+        onSelect={(value) => setFormData({...formData, categoria_principal: value})}
+        options={categorias.map(c => ({ label: c.text, value: c.id }))}
+      />
+
+      <CustomSelect
+        label='Volumen Estimado Mensual'
+        placeholder='Selecciona un rango'
+        value={formData.volumen_estimado}
+        onSelect={(value) => setFormData({...formData, volumen_estimado: value})}
+        options={volumenPaquetes.map(v => ({ label: v.text, value: v.value }))}
       />
 
       <Text category='h6' style={styles.sectionTitle}>Información Personal</Text>
@@ -104,8 +138,8 @@ export const RegisterBusinessScreen = ({ navigation }) => {
       <CustomSelect
         label='Tipo de Identificación'
         placeholder='Selecciona el tipo'
-        value={tiposIdentificacion.find(t => t.id === formData.tipo_identificacion)?.text}
-        onSelect={(item) => setFormData({...formData, tipo_identificacion: item.id})}
+        value={formData.tipo_identificacion}
+        onSelect={(value) => setFormData({...formData, tipo_identificacion: value})}
         options={tiposIdentificacion}
       />
 
@@ -139,23 +173,172 @@ export const RegisterBusinessScreen = ({ navigation }) => {
     </Layout>
   );
 
-  const renderButtons = () => (
-    <Layout style={styles.buttonContainer}>
-      {currentStep > 1 && (
-        <Button 
-          style={[styles.button, styles.backButton]} 
-          appearance='ghost'
-          onPress={() => setCurrentStep(prev => prev - 1)}>
-          Anterior
-        </Button>
-      )}
-      <Button 
-        style={[styles.button, styles.nextButton]}
-        onPress={() => setCurrentStep(prev => prev + 1)}>
-        {currentStep === 3 ? 'Finalizar' : 'Siguiente'}
-      </Button>
+  const renderStep2 = () => (
+    <Layout style={styles.stepContainer}>
+      <Text category='h5' style={styles.stepTitle}>Detalles del Negocio</Text>
+      <Text category='p1' style={styles.stepDescription}>
+        Información sobre tu operación
+      </Text>
+
+      <CustomSelect
+        label='Categoría Principal de Productos'
+        placeholder='Selecciona una categoría'
+        value={formData.categoria_principal}
+        onSelect={(value) => setFormData({...formData, categoria_principal: value})}
+        options={categorias.map(c => ({ label: c.text, value: c.id }))}
+      />
+
+      <CustomSelect
+        label='Volumen Estimado Mensual'
+        placeholder='Selecciona un rango'
+        value={formData.volumen_estimado}
+        onSelect={(value) => setFormData({...formData, volumen_estimado: value})}
+        options={volumenPaquetes.map(v => ({ label: v.text, value: v.value }))}
+      />
     </Layout>
   );
+
+  const renderStep3 = () => (
+    <Layout style={styles.stepContainer}>
+      <Text category='h5' style={styles.stepTitle}>Finalizar Registro</Text>
+      <Text category='p1' style={styles.stepDescription}>
+        Ya estamos finalizando. Por favor, ingresa una contraseña para crear tu cuenta
+      </Text>
+
+      <Input
+        label='Contraseña'
+        placeholder='Ingresa tu contraseña'
+        value={formData.password}
+        secureTextEntry
+        onChangeText={value => setFormData({...formData, password: value})}
+        style={styles.input}
+        caption='Debe contener al menos 8 caracteres'
+      />
+
+      <Input
+        label='Repetir Contraseña'
+        placeholder='Confirma tu contraseña'
+        value={formData.confirmPassword}
+        secureTextEntry
+        onChangeText={value => setFormData({...formData, confirmPassword: value})}
+        style={styles.input}
+        status={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'danger' : 'basic'}
+        caption={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'Las contraseñas no coinciden' : ''}
+      />
+
+      <Layout style={styles.termsContainer}>
+        <CheckBox
+          checked={formData.termsAccepted}
+          onChange={checked => setFormData({...formData, termsAccepted: checked})}
+          style={styles.checkbox}
+        >
+          {evaProps => (
+            <Text {...evaProps} style={styles.termsText}>
+              He leído y acepto los{' '}
+              <Text
+                onPress={() => Linking.openURL('https://99envios.app/terminos-y-condiciones')}
+                style={styles.termsLink}
+              >
+                términos y condiciones
+              </Text>
+            </Text>
+          )}
+        </CheckBox>
+      </Layout>
+    </Layout>
+  );
+
+  const handleSubmit = async () => {
+    if (formData.password !== formData.confirmPassword) {
+      Alert.alert('Error', 'Las contraseñas no coinciden');
+      return;
+    }
+
+    if (!formData.termsAccepted) {
+      Alert.alert('Error', 'Debes aceptar los términos y condiciones');
+      return;
+    }
+
+    try {
+      // Transform form data to match API requirements
+      const apiData = {
+        nombre: formData.nombre,
+        apellido: formData.apellido,
+        cantidad: parseInt(formData.volumen_estimado === '1-100' ? 1 : formData.volumen_estimado === '100-4000' ? 2 : 3),
+        ciudad: formData.ciudad,
+        codigo_pais: formData.pais === 'CO' ? 1 : 2,
+        direccion: formData.direccion_negocio,
+        email: formData.email,
+        id_rol: 3,
+        nombre_sucursal: formData.nombre_sucursal,
+        num_identificacion: formData.num_identificacion,
+        pais: formData.pais === 'CO' ? 1 : 2,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+        producto: categorias.find(c => c.id === formData.categoria_principal)?.text || '',
+        telefono: formData.telefono,
+        terminosCondiciones: formData.termsAccepted,
+        tipo_identificacion: formData.tipo_identificacion,
+      };
+
+      const response = await fetch('https://api.99envios.app/api/auth/register_sucursal', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        body: JSON.stringify(apiData),
+      });
+
+      const data = await response.json();
+      console.log('API Response:', data); // Agregar este log
+
+      if (!response.ok) {
+        // Mostrar el mensaje de error específico de la API
+        const errorMessage = data.message || 
+                           (typeof data.error === 'string' ? data.error : JSON.stringify(data.error)) ||
+                           'Error en el registro';
+        
+        console.error('Error Response:', {
+          status: response.status,
+          data: data,
+          message: errorMessage
+        });
+        
+        throw new Error(errorMessage);
+      }
+
+      Alert.alert(
+        '¡Registro Exitoso!',
+        'Tu cuenta ha sido creada correctamente',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.replace('99 Envios'),
+          },
+        ]
+      );
+    } catch (error) {
+      console.error('Full error details:', {
+        message: error.message,
+        stack: error.stack,
+        originalError: error
+      });
+      
+      Alert.alert(
+        'Error',
+        `Error al registrar: ${error.message}. Por favor intente nuevamente.`
+      );
+    }
+  };
+
+  const handleNext = () => {
+    if (currentStep < 3) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      handleSubmit();
+    }
+  };
 
   return (
     <KeyboardAvoidingView 
@@ -173,7 +356,7 @@ export const RegisterBusinessScreen = ({ navigation }) => {
           <Layout 
             style={[
               styles.progressFill, 
-              { width: `${(currentStep / 3) * 100}%` }
+              { width: `${(currentStep / 3) * 100}%` } 
             ]} 
           />
         </Layout>
@@ -185,7 +368,24 @@ export const RegisterBusinessScreen = ({ navigation }) => {
         bounces={false}
       >
         {currentStep === 1 && renderStep1()}
-        {renderButtons()}
+        {currentStep === 2 && renderStep2()}
+        {currentStep === 3 && renderStep3()}
+        <Layout style={styles.buttonContainer}>
+          {currentStep > 1 && (
+            <Button 
+              style={[styles.button, styles.backButton]} 
+              appearance='ghost'
+              onPress={() => setCurrentStep(prev => prev - 1)}>
+              Anterior
+            </Button>
+          )}
+          <Button 
+            style={[styles.button, styles.nextButton]}
+            onPress={handleNext}
+            disabled={currentStep === 3 && (!formData.password || !formData.confirmPassword || !formData.termsAccepted)}>
+            {currentStep === 3 ? 'Finalizar' : 'Siguiente'}
+          </Button>
+        </Layout>
       </ScrollView>
     </KeyboardAvoidingView>
   );
@@ -263,6 +463,22 @@ const styles = StyleSheet.create({
   select: {
     marginTop: 4,
     backgroundColor: '#fff',
+  },
+  termsContainer: {
+    marginTop: 16,
+    backgroundColor: 'transparent',
+  },
+  checkbox: {
+    marginBottom: 16,
+  },
+  termsText: {
+    fontSize: 14,
+    color: '#2E3A59',
+    marginLeft: 8,
+  },
+  termsLink: {
+    color: '#0086FF',
+    textDecorationLine: 'underline',
   },
 });
 
