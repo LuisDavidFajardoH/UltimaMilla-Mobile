@@ -3,6 +3,7 @@ import * as eva from '@eva-design/eva';
 import { ApplicationProvider, IconRegistry } from '@ui-kitten/components';
 import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import AppNavigator from './src/navigation/AppNavigator';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 const theme = {
   ...eva.light,
@@ -19,9 +20,11 @@ export default function App() {
   return (
     <>
       <IconRegistry icons={EvaIconsPack} />
-      <ApplicationProvider {...eva} theme={theme}>
-        <AppNavigator />
-      </ApplicationProvider>
+      <SafeAreaProvider>
+        <ApplicationProvider {...eva} theme={theme}>
+          <AppNavigator />
+        </ApplicationProvider>
+      </SafeAreaProvider>
     </>
   );
 }

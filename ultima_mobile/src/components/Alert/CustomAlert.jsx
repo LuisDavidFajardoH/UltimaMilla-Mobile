@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, Modal as RNModal, Pressable } from 'react-native';
 import { Card, Text, Button, Layout } from '@ui-kitten/components';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export const CustomAlert = ({ 
   visible = false, 
@@ -9,6 +10,8 @@ export const CustomAlert = ({
   onBackdropPress = () => {}, 
   confirmText = 'OK',
 }) => {
+  const insets = useSafeAreaInsets();
+  
   return (
     <RNModal
       transparent
@@ -17,7 +20,12 @@ export const CustomAlert = ({
       animationType="fade"
     >
       <Pressable 
-        style={styles.backdrop} 
+        style={[styles.backdrop, {
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingLeft: insets.left,
+          paddingRight: insets.right
+        }]} 
         onPress={onBackdropPress}
       >
         <Pressable>

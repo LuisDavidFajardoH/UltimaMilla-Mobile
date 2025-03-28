@@ -2,8 +2,10 @@ import React, { useState } from 'react';
 import { StyleSheet, Image, Alert, KeyboardAvoidingView, ScrollView, Platform, Linking } from 'react-native';
 import { Button, Text, Layout, Input, Icon, Spinner } from '@ui-kitten/components';
 import { CustomAlert } from '../components/Alert/CustomAlert';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function HomeScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [secureTextEntry, setSecureTextEntry] = useState(true);
@@ -109,7 +111,13 @@ function HomeScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView 
-      style={{ flex: 1 }}
+      style={{ 
+        flex: 1,
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right
+      }}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
     >

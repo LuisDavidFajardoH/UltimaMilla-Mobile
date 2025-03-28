@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, TouchableOpacity, Modal, ScrollView } from 'react-native';
-import { Text, Layout, Icon, Button } from '@ui-kitten/components'; // Import Button
+import { Text, Layout, Icon, Button, Input, Spinner } from '@ui-kitten/components'; // Import Button
 
 const CustomSelect = React.memo(({
   label,
@@ -11,8 +11,30 @@ const CustomSelect = React.memo(({
   style,
   status,
   disabled = false,
+  searchable = false, // Nueva prop para habilitar búsqueda
 }) => {
   const [visible, setVisible] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredOptions, setFilteredOptions] = useState(options);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (visible) {
+      setIsLoading(true);
+      // Simular carga de datos
+      setTimeout(() => {
+        if (searchQuery) {
+          const filtered = options.filter(option =>
+            option.label.toLowerCase().includes(searchQuery.toLowerCase())
+          );
+          setFilteredOptions(filtered);
+        } else {
+          setFilteredOptions(options);
+        }
+        setIsLoading(false);
+      }, 500);
+    }
+  }, [searchQuery, visible, options]);
 
   const selectedValue = options.find(option => option.value === value)?.label || placeholder;
 
@@ -30,7 +52,10 @@ const CustomSelect = React.memo(({
       )}
       <TouchableOpacity
         style={styles.selectButton}
-        onPress={() => setVisible(true)}
+        onPress={() => {
+          setVisible(true);
+          setSearchQuery('');
+        }}
         disabled={disabled}
       >
         <Text style={styles.selectText}>{selectedValue}</Text>
@@ -45,20 +70,37 @@ const CustomSelect = React.memo(({
       >
         <View style={styles.modalContainer}>
           <View style={styles.modalContent}>
-            <ScrollView>
-              {options.map((option, index) => (
-                <TouchableOpacity
-                  key={`${option.value}-${index}`}
-                  style={styles.option}
-                  onPress={() => {
-                    onSelect(option.value);
-                    setVisible(false);
-                  }}
-                >
-                  <Text>{option.label}</Text>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
+            {searchable && (
+              <Input
+                placeholder="Buscar..."
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                style={styles.searchInput}
+                accessoryLeft={(props) => <Icon {...props} name='search-outline'/>}
+              />
+            )}
+
+            {isLoading ? (
+              <Layout style={styles.loadingContainer}>
+                <Spinner size='large'/>
+              </Layout>
+            ) : (
+              <ScrollView>
+                {filteredOptions.map((option, index) => (
+                  <TouchableOpacity
+                    key={`${option.value}-${index}`}
+                    style={styles.option}
+                    onPress={() => {
+                      onSelect(option.value);
+                      setVisible(false);
+                    }}
+                  >
+                    <Text>{option.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            )}
+            
             <Button appearance='ghost' onPress={() => setVisible(false)}>
               Cerrar
             </Button>
@@ -113,13 +155,23 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 8,
     padding: 16,
-    width: '80%',
-    maxHeight: '60%',
+    width: '90%',
+    maxHeight: '80%',
   },
   option: {
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E4E9F2',
+  },
+  searchInput: {
+    marginBottom: 16,
+    borderRadius: 8,
+  },
+  loadingContainer: {
+    height: 200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
   },
 });
 

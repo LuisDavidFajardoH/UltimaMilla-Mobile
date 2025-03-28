@@ -4,6 +4,7 @@ import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, 
 import CustomSelect from '../../components/Select/select';
 import Ciudades from '../../ciudades/ciudades';
 import { CustomAlert } from '../../components/Alert/CustomAlert';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const tiposIdentificacion = [
   { label: 'Cédula de Ciudadanía', value: 'CC' },
@@ -28,6 +29,7 @@ const volumenPaquetes = [
 ];
 
 export const RegisterBusinessScreen = ({ navigation }) => {
+  const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     pais: '',
@@ -154,6 +156,7 @@ export const RegisterBusinessScreen = ({ navigation }) => {
         value={formData.ciudad}
         onSelect={(value) => setFormData({...formData, ciudad: value})}
         options={Ciudades}
+        searchable={true} // Habilitamos la búsqueda para el select de ciudades
       />
 
       <Text category='h6' style={styles.sectionTitle}>Información del Negocio</Text>
@@ -497,7 +500,12 @@ export const RegisterBusinessScreen = ({ navigation }) => {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
+      style={[styles.container, { 
+        paddingTop: insets.top,
+        paddingBottom: insets.bottom,
+        paddingLeft: insets.left,
+        paddingRight: insets.right
+      }]} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <TopNavigation
