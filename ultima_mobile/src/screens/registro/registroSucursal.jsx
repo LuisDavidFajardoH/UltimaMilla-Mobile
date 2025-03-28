@@ -1,14 +1,12 @@
 import React, { useState } from 'react';
-import { StyleSheet, Platform, ScrollView, Alert, KeyboardAvoidingView } from 'react-native';
-import { Button, Text, Layout, Input, Select, SelectItem, Radio, RadioGroup, CheckBox, Icon } from '@ui-kitten/components';
+import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, SelectItem } from '@ui-kitten/components';
+import CustomSelect from '../../components/Select/select';
 
-const productos = [
-  { id: '1', text: 'Bisuteria' },
-  { id: '2', text: 'Ropa Deportiva' },
-  { id: '3', text: 'Vaporizadores' },
-  { id: '4', text: 'Mascotas' },
-  { id: '5', text: 'Moda' },
-  { id: '6', text: 'Tecnología' },
+const tiposIdentificacion = [
+  { id: 'CC', text: 'Cédula de Ciudadanía' },
+  { id: 'CE', text: 'Cédula de Extranjería' },
+  { id: 'NIT', text: 'NIT' },
 ];
 
 const ciudades = [
@@ -17,43 +15,12 @@ const ciudades = [
   { id: '3', text: 'Cali' },
 ];
 
-const paises = [
-  { id: '1', text: 'Colombia' },
-  { id: '2', text: 'México' }
-];
-
-const CustomSelect = React.memo(({ 
-  label = '', 
-  value = '', 
-  onSelect = () => {}, 
-  placeholder = 'Seleccione una opción', 
-  data = [] 
-}) => {
-  const displayValue = React.useMemo(() => value || placeholder, [value, placeholder]);
-
-  return (
-    <Layout style={styles.selectContainer}>
-      {label && <Text category='label' style={styles.selectLabel}>{label}</Text>}
-      <Select
-        value={displayValue}
-        onSelect={onSelect}
-        style={styles.selectInput}>
-        {data.map(item => (
-          <SelectItem key={item.id} title={item.text} />
-        ))}
-      </Select>
-    </Layout>
-  );
-});
-
-CustomSelect.displayName = 'CustomSelect';
-
 export const RegisterBusinessScreen = ({ navigation }) => {
+  const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    id_rol: 3,
     pais: '',
     nombre_sucursal: '',
-    direccion: '',
+    direccion_negocio: '',
     ciudad: '',
     nombre: '',
     apellido: '',
@@ -61,185 +28,178 @@ export const RegisterBusinessScreen = ({ navigation }) => {
     num_identificacion: '',
     email: '',
     telefono: '',
-    producto: '',
-    cantidad: '1',
-    password: '',
-    password_confirmation: '',
-    terminosCondiciones: false
   });
 
-  const handleSubmit = async () => {
-    try {
-      // Validar campos requeridos
-      if (!formData.nombre_sucursal || !formData.direccion || !formData.ciudad || 
-          !formData.nombre || !formData.apellido || !formData.email || 
-          !formData.password || !formData.password_confirmation) {
-        Alert.alert('Error', 'Por favor complete todos los campos requeridos');
-        return;
-      }
-
-      if (!formData.terminosCondiciones) {
-        Alert.alert('Error', 'Debe aceptar los términos y condiciones');
-        return;
-      }
-
-      const response = await fetch('https://api.99envios.app/api/auth/register_sucursal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json'
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Error en el registro');
-      }
-
-      Alert.alert(
-        'Registro Exitoso', 
-        'Tu cuenta ha sido creada correctamente',
-        [
-          {
-            text: 'OK',
-            onPress: () => navigation.navigate('99 Envios') // Redirigir al login
-          }
-        ]
-      );
-
-    } catch (error) {
-      Alert.alert(
-        'Error',
-        error.message || 'Hubo un error al crear la cuenta'
-      );
-    }
-  };
-
-  const HeaderIcon = (props) => (
-    <Icon {...props} name='arrow-back' onPress={() => navigation.goBack()}/>
+  const BackIcon = (props) => (
+    <Icon {...props} name='arrow-back'/>
   );
 
-  const renderHeader = () => (
-    <Layout style={styles.header}>
-      <Button 
-        appearance='ghost' 
-        accessoryLeft={HeaderIcon}
-        onPress={() => navigation.goBack()}
+  const renderBackAction = () => (
+    <TopNavigationAction 
+      icon={BackIcon} 
+      onPress={navigation.goBack}
+    />
+  );
+
+  const renderStep1 = () => (
+    <Layout style={styles.stepContainer}>
+      <Text category='h5' style={styles.stepTitle}>Información del Negocio</Text>
+      <Text category='p1' style={styles.stepDescription}>
+        Cuéntanos sobre ti y tu negocio
+      </Text>
+
+      <CustomSelect
+        label='País'
+        placeholder='Selecciona tu país'
+        value={formData.pais}
+        onSelect={(value) => setFormData({...formData, pais: value})}
+        options={[
+          { label: 'Colombia', value: 'CO' },
+          { label: 'México', value: 'MX' }
+        ]}
       />
-      <Layout style={styles.progressContainer}>
-        <Layout style={styles.progressBar}>
-          <Layout style={[styles.progressFill, { width: '25%' }]} />
-        </Layout>
-      </Layout>
-      <Text category='h5' style={styles.headerTitle}>Registro de Sucursal</Text>
+
+      <Input
+        label='Nombre del Negocio'
+        placeholder='Ingresa el nombre de tu negocio'
+        value={formData.nombre_sucursal}
+        onChangeText={value => setFormData({...formData, nombre_sucursal: value})}
+        style={styles.input}
+      />
+
+      <Input
+        label='Dirección del Negocio'
+        placeholder='Ingresa la dirección'
+        value={formData.direccion_negocio}
+        onChangeText={value => setFormData({...formData, direccion_negocio: value})}
+        style={styles.input}
+      />
+
+      <CustomSelect
+        label='Ciudad'
+        placeholder='Selecciona tu ciudad'
+        value={formData.ciudad}
+        onSelect={(value) => setFormData({...formData, ciudad: value})}
+        options={ciudades.map(c => ({ label: c.text, value: c.id }))}
+      />
+
+      <Text category='h6' style={styles.sectionTitle}>Información Personal</Text>
+
+      <Input
+        label='Nombre'
+        placeholder='Ingresa tu nombre'
+        value={formData.nombre}
+        onChangeText={value => setFormData({...formData, nombre: value})}
+        style={styles.input}
+      />
+
+      <Input
+        label='Apellido'
+        placeholder='Ingresa tu apellido'
+        value={formData.apellido}
+        onChangeText={value => setFormData({...formData, apellido: value})}
+        style={styles.input}
+      />
+
+      <CustomSelect
+        label='Tipo de Identificación'
+        placeholder='Selecciona el tipo'
+        value={tiposIdentificacion.find(t => t.id === formData.tipo_identificacion)?.text}
+        onSelect={(item) => setFormData({...formData, tipo_identificacion: item.id})}
+        options={tiposIdentificacion}
+      />
+
+      <Input
+        label='Número de Identificación'
+        placeholder='Ingresa tu número de identificación'
+        value={formData.num_identificacion}
+        onChangeText={value => setFormData({...formData, num_identificacion: value})}
+        keyboardType='numeric'
+        style={styles.input}
+      />
+
+      <Input
+        label='Correo Electrónico'
+        placeholder='correo@ejemplo.com'
+        value={formData.email}
+        onChangeText={value => setFormData({...formData, email: value})}
+        keyboardType='email-address'
+        autoCapitalize='none'
+        style={styles.input}
+      />
+
+      <Input
+        label='Teléfono'
+        placeholder='Ingresa tu número de teléfono'
+        value={formData.telefono}
+        onChangeText={value => setFormData({...formData, telefono: value})}
+        keyboardType='phone-pad'
+        style={styles.input}
+      />
+    </Layout>
+  );
+
+  const renderButtons = () => (
+    <Layout style={styles.buttonContainer}>
+      {currentStep > 1 && (
+        <Button 
+          style={[styles.button, styles.backButton]} 
+          appearance='ghost'
+          onPress={() => setCurrentStep(prev => prev - 1)}>
+          Anterior
+        </Button>
+      )}
+      <Button 
+        style={[styles.button, styles.nextButton]}
+        onPress={() => setCurrentStep(prev => prev + 1)}>
+        {currentStep === 3 ? 'Finalizar' : 'Siguiente'}
+      </Button>
     </Layout>
   );
 
   return (
     <KeyboardAvoidingView 
-      style={{ flex: 1 }} 
+      style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Layout style={styles.container}>
-        {renderHeader()}
-        <ScrollView style={styles.scrollView} bounces={false}>
-          <Layout style={styles.formContainer}>
-            <Text category='s1' style={styles.sectionTitle}>Información del Negocio</Text>
-            
-            <CustomSelect
-              label='País'
-              value={paises.find(p => p.id === formData.pais)?.text}
-              onSelect={index => {
-                const selectedCountry = paises[index.row];
-                setFormData(prev => ({...prev, pais: selectedCountry.id}));
-              }}
-              data={paises}
-            />
+      <TopNavigation
+        title='Registro de Sucursal'
+        alignment='center'
+        accessoryLeft={renderBackAction}
+      />
 
-            <Input
-              label='Nombre del Negocio'
-              placeholder='Ingrese el nombre de su negocio'
-              value={formData.nombre_sucursal}
-              onChangeText={value => setFormData({...formData, nombre_sucursal: value})}
-              style={styles.input}
-            />
-
-            <Input
-              label='Dirección'
-              placeholder='Ingrese la dirección'
-              value={formData.direccion}
-              onChangeText={value => setFormData({...formData, direccion: value})}
-              style={styles.input}
-            />
-
-            <CustomSelect
-              label='Ciudad'
-              value={ciudades.find(c => c.id === formData.ciudad)?.text}
-              onSelect={(item) => setFormData({...formData, ciudad: item.id})}
-              placeholder='Seleccione una ciudad'
-              data={ciudades}
-            />
-
-            <Text category='s1' style={styles.sectionTitle}>Información Personal</Text>
-            
-            {/* ... Add personal information inputs ... */}
-
-            <Text category='s1' style={styles.sectionTitle}>Información del Producto</Text>
-            
-            <CustomSelect
-              label='Tipo de Producto'
-              value={productos.find(p => p.id === formData.producto)?.text}
-              onSelect={(item) => setFormData({...formData, producto: item.id})}
-              placeholder='Seleccione un producto'
-              data={productos}
-            />
-
-            <RadioGroup
-              selectedIndex={parseInt(formData.cantidad) - 1}
-              onChange={index => setFormData({...formData, cantidad: (index + 1).toString()})}
-              style={styles.radioGroup}>
-              <Radio>1 a 100 envíos</Radio>
-              <Radio>Entre 100 y 4.000 envíos</Radio>
-              <Radio>Más de 4.000 envíos</Radio>
-            </RadioGroup>
-
-            <CheckBox
-              checked={formData.terminosCondiciones}
-              onChange={checked => setFormData({...formData, terminosCondiciones: checked})}
-              style={styles.checkbox}>
-              Acepto términos y condiciones
-            </CheckBox>
-
-            <Button 
-              style={styles.submitButton}
-              onPress={handleSubmit}
-              size='large'>
-              REGISTRAR SUCURSAL
-            </Button>
-          </Layout>
-        </ScrollView>
+      <Layout style={styles.progressContainer}>
+        <Layout style={styles.progressBar}>
+          <Layout 
+            style={[
+              styles.progressFill, 
+              { width: `${(currentStep / 3) * 100}%` }
+            ]} 
+          />
+        </Layout>
       </Layout>
+
+      <ScrollView 
+        style={styles.content}
+        contentContainerStyle={styles.scrollContent}
+        bounces={false}
+      >
+        {currentStep === 1 && renderStep1()}
+        {renderButtons()}
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
 
-export default RegisterBusinessScreen;
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f8f9fc',
-  },
-  header: {
-    padding: 16,
-    backgroundColor: '#fff',
-    borderBottomWidth: 1,
-    borderBottomColor: '#E4E9F2',
+    backgroundColor: '#F7F9FC',
   },
   progressContainer: {
-    marginVertical: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: 'transparent',
   },
   progressBar: {
     height: 4,
@@ -251,48 +211,59 @@ const styles = StyleSheet.create({
     backgroundColor: '#0086FF',
     borderRadius: 2,
   },
-  headerTitle: {
-    textAlign: 'center',
-    marginTop: 8,
-    color: '#2E3A59',
-  },
-  scrollView: {
+  content: {
     flex: 1,
   },
-  formContainer: {
+  scrollContent: {
+    flexGrow: 1,
+    paddingBottom: 24,
+  },
+  stepContainer: {
     padding: 16,
+    backgroundColor: 'transparent',
+  },
+  stepTitle: {
+    marginBottom: 8,
+    fontWeight: 'bold',
+  },
+  stepDescription: {
+    color: '#8F9BB3',
+    marginBottom: 24,
   },
   sectionTitle: {
-    marginVertical: 16,
+    marginTop: 24,
+    marginBottom: 16,
     color: '#2E3A59',
-    fontWeight: '600',
   },
   input: {
     marginBottom: 16,
     backgroundColor: '#fff',
     borderRadius: 8,
   },
-  radioGroup: {
-    marginBottom: 24,
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 16,
+    backgroundColor: 'transparent',
   },
-  checkbox: {
-    marginBottom: 24,
+  button: {
+    flex: 1,
+    margin: 8,
   },
-  submitButton: {
-    marginVertical: 24,
+  backButton: {
+    backgroundColor: 'transparent',
+  },
+  nextButton: {
+    backgroundColor: '#0086FF',
   },
   selectContainer: {
     marginBottom: 16,
     backgroundColor: 'transparent',
   },
-  selectLabel: {
-    color: '#2E3A59',
-    marginBottom: 4,
-    fontWeight: '500',
-  },
-  selectInput: {
+  select: {
+    marginTop: 4,
     backgroundColor: '#fff',
-    borderRadius: 8,
-    borderColor: '#E4E9F2',
   },
 });
+
+export default RegisterBusinessScreen;
