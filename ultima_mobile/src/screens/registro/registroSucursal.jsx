@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView, Alert, Linking } from 'react-native';
 import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, CheckBox } from '@ui-kitten/components';
 import CustomSelect from '../../components/Select/select';
@@ -77,6 +77,35 @@ export const RegisterBusinessScreen = ({ navigation }) => {
     />
   );
 
+  const handleSubmitEditing = () => {
+    if (currentStep < 3) {
+      if (validateStep(currentStep)) {
+        setCurrentStep(prev => prev + 1);
+      }
+    } else {
+      handleSubmit();
+    }
+  };
+
+  // Refs para los inputs del paso 1
+  const nombreSucursalRef = useRef();
+  const direccionRef = useRef();
+  const nombreRef = useRef();
+  const apellidoRef = useRef();
+  const identificacionRef = useRef();
+  const emailRef = useRef();
+  const telefonoRef = useRef();
+
+  // Refs para los inputs del paso 3
+  const passwordRef = useRef();
+  const confirmPasswordRef = useRef();
+
+  const handleInputSubmit = (nextRef) => {
+    if (nextRef && nextRef.current) {
+      nextRef.current.focus();
+    }
+  };
+
   const renderStep1 = () => (
     <Layout style={styles.stepContainer}>
       <Text category='h5' style={styles.stepTitle}>Información del Negocio</Text>
@@ -96,19 +125,27 @@ export const RegisterBusinessScreen = ({ navigation }) => {
       />
 
       <Input
+        ref={nombreSucursalRef}
         label='Nombre del Negocio'
         placeholder='Ingresa el nombre de tu negocio'
         value={formData.nombre_sucursal}
         onChangeText={value => setFormData({...formData, nombre_sucursal: value})}
         style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(direccionRef)}
+        blurOnSubmit={false}
       />
 
       <Input
+        ref={direccionRef}
         label='Dirección del Negocio'
         placeholder='Ingresa la dirección'
         value={formData.direccion_negocio}
         onChangeText={value => setFormData({...formData, direccion_negocio: value})}
         style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(nombreRef)}
+        blurOnSubmit={false}
       />
 
       <CustomSelect
@@ -140,19 +177,27 @@ export const RegisterBusinessScreen = ({ navigation }) => {
       <Text category='h6' style={styles.sectionTitle}>Información Personal</Text>
 
       <Input
+        ref={nombreRef}
         label='Nombre'
         placeholder='Ingresa tu nombre'
         value={formData.nombre}
         onChangeText={value => setFormData({...formData, nombre: value})}
         style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(apellidoRef)}
+        blurOnSubmit={false}
       />
 
       <Input
+        ref={apellidoRef}
         label='Apellido'
         placeholder='Ingresa tu apellido'
         value={formData.apellido}
         onChangeText={value => setFormData({...formData, apellido: value})}
         style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(identificacionRef)}
+        blurOnSubmit={false}
       />
 
       <CustomSelect
@@ -164,15 +209,20 @@ export const RegisterBusinessScreen = ({ navigation }) => {
       />
 
       <Input
+        ref={identificacionRef}
         label='Número de Identificación'
         placeholder='Ingresa tu número de identificación'
         value={formData.num_identificacion}
         onChangeText={value => setFormData({...formData, num_identificacion: value})}
         keyboardType='numeric'
         style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(emailRef)}
+        blurOnSubmit={false}
       />
 
       <Input
+        ref={emailRef}
         label='Correo Electrónico'
         placeholder='correo@ejemplo.com'
         value={formData.email}
@@ -180,15 +230,22 @@ export const RegisterBusinessScreen = ({ navigation }) => {
         keyboardType='email-address'
         autoCapitalize='none'
         style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(telefonoRef)}
+        blurOnSubmit={false}
       />
 
       <Input
+        ref={telefonoRef}
         label='Teléfono'
         placeholder='Ingresa tu número de teléfono'
         value={formData.telefono}
         onChangeText={value => setFormData({...formData, telefono: value})}
         keyboardType='phone-pad'
         style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={handleNext}
+        blurOnSubmit={true}
       />
     </Layout>
   );
@@ -226,6 +283,7 @@ export const RegisterBusinessScreen = ({ navigation }) => {
       </Text>
 
       <Input
+        ref={passwordRef}
         label='Contraseña'
         placeholder='Ingresa tu contraseña'
         value={formData.password}
@@ -233,9 +291,13 @@ export const RegisterBusinessScreen = ({ navigation }) => {
         onChangeText={value => setFormData({...formData, password: value})}
         style={styles.input}
         caption='Debe contener al menos 8 caracteres'
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(confirmPasswordRef)}
+        blurOnSubmit={false}
       />
 
       <Input
+        ref={confirmPasswordRef}
         label='Repetir Contraseña'
         placeholder='Confirma tu contraseña'
         value={formData.confirmPassword}
@@ -244,6 +306,9 @@ export const RegisterBusinessScreen = ({ navigation }) => {
         style={styles.input}
         status={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'danger' : 'basic'}
         caption={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'Las contraseñas no coinciden' : ''}
+        returnKeyType="done"
+        onSubmitEditing={handleNext}
+        blurOnSubmit={true}
       />
 
       <Layout style={styles.termsContainer}>
