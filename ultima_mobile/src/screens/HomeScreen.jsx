@@ -98,6 +98,8 @@ function HomeScreen({ navigation }) {
           navigation.replace('Admin');
           break;
         case 2:
+          navigation.replace('Conductor');
+          break;
         case 4:
           navigation.replace('Conductor');
           break;
