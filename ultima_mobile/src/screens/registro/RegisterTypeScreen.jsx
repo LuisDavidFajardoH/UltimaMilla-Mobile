@@ -5,12 +5,14 @@ import { Button, Text, Layout, Icon, Card } from '@ui-kitten/components';
 const BusinessIcon = (props) => (
   <Layout style={styles.iconContainer}>
     <Icon {...props} name='briefcase-outline' style={styles.icon}/>
+    <Text category='h6' style={styles.iconTitle}>Sucursal</Text>
   </Layout>
 );
 
 const DeliveryIcon = (props) => (
   <Layout style={styles.iconContainer}>
     <Icon {...props} name='car-outline' style={styles.icon}/>
+    <Text category='h6' style={styles.iconTitle}>Repartidor</Text>
   </Layout>
 );
 
@@ -168,40 +170,41 @@ export const RegisterTypeScreen = ({ navigation }) => {
       <Layout style={styles.cardsContainer}>
         <Card style={[styles.optionCard, styles.leftCard]}>
           <Layout style={styles.cardInnerContainer}>
-            <Layout style={styles.cardTopContent}>
+            <Layout style={styles.iconTitleContainer}>
               <BusinessIcon/>
-              <Text category='h6' style={styles.cardTitle}>Sucursal</Text>
+              <Button 
+                size='medium'
+                style={styles.cardButton} 
+                status='primary'
+                onPress={() => navigation.navigate('RegisterBusiness')}>
+                Ir
+              </Button>
+            </Layout>
+            <Layout style={styles.cardContent}>
               <Text style={styles.cardDescription}>
                 Gestiona envíos y entregas eficientemente
               </Text>
             </Layout>
-            <Button 
-              size='large'
-              style={styles.cardButton} 
-              status='primary'
-              onPress={() => navigation.navigate('RegisterBusiness')}>
-              Ir
-            </Button>
           </Layout>
         </Card>
 
         <Card style={[styles.optionCard, styles.rightCard]}>
           <Layout style={styles.cardInnerContainer}>
-            <Layout style={styles.cardTopContent}>
+            <Layout style={styles.iconTitleContainer}>
               <DeliveryIcon/>
-              <Text category='h6' style={styles.cardTitle}>Repartidor</Text>
+              <Button 
+                size='medium'
+                style={styles.cardButton}
+                status='primary'
+                onPress={() => navigation.navigate('RegisterDelivery')}>
+                Ir
+              </Button>
+            </Layout>
+            <Layout style={styles.cardContent}>
               <Text style={styles.cardDescription}>
                 Únete y genera ingresos extra
               </Text>
             </Layout>
-            <Button 
-              size='large'
-              style={styles.cardButton}
-              appearance='outline' 
-              status='primary'
-              onPress={() => Alert.alert('Próximamente', 'Esta funcionalidad estará disponible pronto')}>
-              Ir
-            </Button>
           </Layout>
         </Card>
       </Layout>
@@ -220,6 +223,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#f8f9fc',
+    justifyContent: 'space-between',
   },
   header: {
     paddingTop: Platform.OS === 'ios' ? 60 : 40,
@@ -246,24 +250,25 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     textAlign: 'center',
-    marginBottom: 32,
     color: '#8F9BB3',
     paddingHorizontal: 40,
     lineHeight: 22,
   },
   cardsContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column',
     justifyContent: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 20,
     backgroundColor: 'transparent',
+    flex: 1,
+    marginVertical: 'auto',
   },
   optionCard: {
-    flex: 1,
-    margin: 8,
+    marginVertical: 8,
+    marginHorizontal: 0,
     borderRadius: 16,
-    padding: 20,
-    maxWidth: '44%',
-    minWidth: '44%',
+    padding: 12,
+    width: '100%',
+    maxWidth: '100%',
     backgroundColor: '#fff',
     shadowColor: '#000',
     shadowOffset: {
@@ -275,24 +280,29 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
   leftCard: {
-    marginRight: 4,
+    marginBottom: 8,
   },
   rightCard: {
-    marginLeft: 4,
+    marginTop: 8,
   },
   iconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: 'rgba(0, 134, 255, 0.1)', // Cambiado a azul con opacidad
-    justifyContent: 'center',
+    flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    backgroundColor: 'rgba(0, 134, 255, 0.1)',
+    borderRadius: 12,
+    height: 42,
+    paddingHorizontal: 24,
+    gap: 12,
   },
   icon: {
-    width: 32,
-    height: 32,
-    tintColor: '#0086FF', // Cambiado a azul
+    width: 24,
+    height: 24,
+    tintColor: '#0086FF',
+  },
+  iconTitle: {
+    color: '#0086FF',
+    fontWeight: '600',
+    fontSize: 16,
   },
   cardContent: {
     backgroundColor: 'transparent',
@@ -326,45 +336,54 @@ const styles = StyleSheet.create({
     width: 180,
     height: 180,
     backgroundColor: 'rgba(0, 134, 255, 0.08)',
-    bottom: '15%', // Cambiado de 5% a 15% para subirlo
+    bottom: '15%',
     right: -60,
     borderRadius: 90,
   },
   cardTitle: {
-    marginBottom: 12,
     color: '#2E3A59',
     fontWeight: '600',
     fontSize: 20,
+    marginTop: 0,
   },
   cardDescription: {
     color: '#8F9BB3',
     fontSize: 14,
     lineHeight: 20,
-    borderLeftWidth: 2,
-    borderLeftColor: '#FF5E70',
-    paddingLeft: 12,
+    textAlign: 'center',
     marginBottom: 8,
   },
   cardButton: {
     borderRadius: 12,
-    marginTop: 8,
-    height: 48,
+    minWidth: 80,
   },
   cardInnerContainer: {
-    minHeight: 220,
-    justifyContent: 'space-between',
     backgroundColor: 'transparent',
   },
-  cardTopContent: {
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     backgroundColor: 'transparent',
-    alignItems: 'flex-start',
-    marginBottom: 20,
+    marginBottom: 16,
+  },
+  iconTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    marginBottom: 16,
+    justifyContent: 'space-between',
+  },
+  iconAndTitle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+    gap: 12,
   },
   footer: {
     padding: 24,
     alignItems: 'center',
     backgroundColor: 'transparent',
-    marginTop: 'auto',
   },
   footerText: {
     color: '#8F9BB3',

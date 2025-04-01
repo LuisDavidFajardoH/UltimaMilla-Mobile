@@ -4,6 +4,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import HomeScreen from '../screens/HomeScreen';
 import RegisterTypeScreen from '../screens/registro/RegisterTypeScreen';
 import { RegisterBusinessScreen } from '../screens/registro/registroSucursal';
+import { RegisterDeliveryScreen } from '../screens/registro/registroRepartidor';
 import { TableroSucursalScreen } from '../screens/TableroSucursal/TableroSucursal';
 import { TableroConductorScreen } from '../screens/TableroConductor/TableroConductor';
 
@@ -21,11 +22,9 @@ function AppNavigator() {
         <Stack.Screen name="99 Envios" component={HomeScreen} />
         <Stack.Screen name="Register" component={RegisterTypeScreen} />
         <Stack.Screen name="RegisterBusiness" component={RegisterBusinessScreen} />
+        <Stack.Screen name="RegisterDelivery" component={RegisterDeliveryScreen} />
         <Stack.Screen name="Tablero" component={TableroSucursalScreen} />
         <Stack.Screen name="Conductor" component={TableroConductorScreen} />
-        {/* Temporalmente comentamos esta ruta hasta crear el componente
-        <Stack.Screen name="RegisterDelivery" component={RegisterDeliveryScreen} /> 
-        */}
       </Stack.Navigator>
     </NavigationContainer>
   );
