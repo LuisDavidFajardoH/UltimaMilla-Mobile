@@ -9,6 +9,7 @@ import { RegisterBusinessScreen } from '../screens/registro/registroSucursal';
 import { RegisterDeliveryScreen } from '../screens/registro/registroRepartidor';
 import { TableroSucursalScreen } from '../screens/TableroSucursal/TableroSucursal';
 import { TableroConductorScreen } from '../screens/TableroConductor/TableroConductor';
+import ReportesScreen from '../screens/Reportes/ReportesScreen'; // Update import to use default import
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -25,10 +26,10 @@ function DrawerNavigator() {
           backgroundColor: '#fff',
           elevation: 0,
           shadowOpacity: 0,
-          height: 52, // Reducida altura del header
+          height: 100,
         },
         headerTitleStyle: {
-          fontSize: 16, // Título más pequeño
+          fontSize: 16,
         },
         headerTintColor: '#2E3A59',
         drawerStyle: {
@@ -38,15 +39,16 @@ function DrawerNavigator() {
         drawerActiveTintColor: '#0086FF',
         drawerInactiveTintColor: '#2E3A59',
         drawerItemStyle: {
-          height: 60, // Altura reducida de cada item
-          marginVertical: 0, // Sin margen vertical
-          paddingVertical: 0, // Sin padding vertical
+          height: 62,
+          marginVertical: 0,
+          paddingVertical: 0,
         },
         drawerLabelStyle: {
-          fontSize: 14, // Texto más pequeño
-          marginLeft: 0, // Reducir espacio entre icono y texto
+          fontSize: 14,
+          marginLeft: 0,
         },
       }}
+      initialRouteName="TableroSucursal"
     >
       <Drawer.Screen 
         name="TableroSucursal" 
@@ -57,42 +59,15 @@ function DrawerNavigator() {
         }}
       />
       <Drawer.Screen 
-        name="Dashboard99" 
-        component={TableroSucursalScreen}
-        options={{
-          title: 'Dashboard 99',
-          drawerIcon: (props) => renderIcon(props)('browser-outline')
-        }}
-      />
-      
-      {/* Grupo de Administrar Sucursal */}
-      <Drawer.Screen 
         name="Reportes" 
-        component={TableroSucursalScreen}
+        component={ReportesScreen}  // Use the imported component
         options={{
           title: 'Reportes',
-          drawerIcon: (props) => renderIcon(props)('bar-chart-outline'),
-          groupName: 'Administrar Sucursal'
+          drawerIcon: (props) => renderIcon(props)('bar-chart-outline')
         }}
       />
       <Drawer.Screen 
-        name="Pedidos" 
-        component={TableroSucursalScreen}
-        options={{
-          title: 'Pedidos',
-          drawerIcon: (props) => renderIcon(props)('file-text-outline')
-        }}
-      />
-      <Drawer.Screen 
-        name="CrearConductor" 
-        component={TableroSucursalScreen}
-        options={{
-          title: 'Crear Conductor',
-          drawerIcon: (props) => renderIcon(props)('person-add-outline')
-        }}
-      />
-      <Drawer.Screen 
-        name="Inventario" 
+        name="InventarioSucursal" 
         component={TableroSucursalScreen}
         options={{
           title: 'Inventario',
@@ -100,17 +75,7 @@ function DrawerNavigator() {
         }}
       />
       <Drawer.Screen 
-        name="Dropshipping" 
-        component={TableroSucursalScreen}
-        options={{
-          title: 'Dropshipping',
-          drawerIcon: (props) => renderIcon(props)('shopping-bag-outline')
-        }}
-      />
-
-      {/* Grupo de Pedidos */}
-      <Drawer.Screen 
-        name="PedidoIndividual" 
+        name="PedidoIndividualSucursal" 
         component={TableroSucursalScreen}
         options={{
           title: 'Pedido Individual',
@@ -118,27 +83,11 @@ function DrawerNavigator() {
         }}
       />
       <Drawer.Screen 
-        name="PedidoMasivo" 
+        name="PedidoMasivoSucursal" 
         component={TableroSucursalScreen}
         options={{
           title: 'Pedido Masivo',
           drawerIcon: (props) => renderIcon(props)('layers-outline')
-        }}
-      />
-      <Drawer.Screen 
-        name="EditarPedidos" 
-        component={TableroSucursalScreen}
-        options={{
-          title: 'Editar Pedidos',
-          drawerIcon: (props) => renderIcon(props)('edit-2-outline')
-        }}
-      />
-      <Drawer.Screen 
-        name="CerrarSesion" 
-        component={TableroSucursalScreen}
-        options={{
-          title: 'Cerrar Sesión',
-          drawerIcon: (props) => renderIcon(props)('log-out-outline')
         }}
       />
     </Drawer.Navigator>
@@ -149,17 +98,17 @@ function AppNavigator() {
   return (
     <NavigationContainer>
       <Stack.Navigator 
-        initialRouteName="99 Envios"
+        initialRouteName="Login"
         screenOptions={{
           headerShown: false,
           cardStyle: { backgroundColor: '#f8f9fc' }
         }}>
-        <Stack.Screen name="99 Envios" component={HomeScreen} />
+        <Stack.Screen name="Login" component={HomeScreen} />
         <Stack.Screen name="Register" component={RegisterTypeScreen} />
         <Stack.Screen name="RegisterBusiness" component={RegisterBusinessScreen} />
         <Stack.Screen name="RegisterDelivery" component={RegisterDeliveryScreen} />
-        <Stack.Screen name="Tablero" component={DrawerNavigator} />
-        <Stack.Screen name="Conductor" component={TableroConductorScreen} />
+        <Stack.Screen name="SucursalDashboard" component={DrawerNavigator} />
+        <Stack.Screen name="ConductorDashboard" component={TableroConductorScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

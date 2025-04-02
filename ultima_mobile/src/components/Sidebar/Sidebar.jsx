@@ -41,8 +41,8 @@ export const Sidebar = ({ isOpen, onClose, navigation, rol_id }) => {
                 onClose();
               })}
 
-              {renderMenuItem('Dashboard 99', 'view-outline', () => {
-                navigation.navigate('Dashboard99');
+              {renderMenuItem('Reportes', 'bar-chart-outline', () => {
+                navigation.navigate('Reportes');
                 onClose();
               })}
 
