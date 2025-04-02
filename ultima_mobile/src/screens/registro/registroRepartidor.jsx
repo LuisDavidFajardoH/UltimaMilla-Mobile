@@ -18,7 +18,7 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
   const [formData, setFormData] = useState({
     nombre_usuario: '',
     documento_identidad: '',
-    num_identidad: '',
+    num_identificacion: '',
     pais: '',
     ciudad: '',
     direccion: '',
@@ -159,10 +159,10 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       />
 
       <Input
-        label='Documento de Identidad'
-        placeholder='Ingresa tu documento de identidad'
-        value={formData.num_identidad}
-        onChangeText={value => setFormData({...formData, num_identidad: value})}
+        label='Número de Identificación'
+        placeholder='Ingresa tu número de identificación'
+        value={formData.num_identificacion}
+        onChangeText={value => setFormData({...formData, num_identificacion: value})}
         keyboardType='numeric'
         style={styles.input}
       />
