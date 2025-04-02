@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView, Alert, Linking, Image, TouchableOpacity } from 'react-native';
 import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, CheckBox, Datepicker } from '@ui-kitten/components';
 import CustomSelect from '../../components/Select/select';
@@ -16,15 +16,15 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
-    nombre_usuario: '',              // antes: nombre
-    documento_identidad: '',         // antes: num_identificacion
-    num_identidad: '',               // se puede quedar si se requiere, o eliminarlo
+    nombre_usuario: '',
+    documento_identidad: '',
+    num_identidad: '',
     pais: '',
     ciudad: '',
-    direccion: '',                   // se usa "direccion"
+    direccion: '',
     email: '',
     celular: '',
-    capacidad_carga: '',             // antes: volumen_estimado
+    capacidad_carga: '',
     password: '',
     confirmPassword: '',
     termsAccepted: false,
@@ -33,7 +33,6 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
     vencimiento_soat: new Date(),
     vencimiento_tecnomecanica: new Date(),
     tipo_identificacion: '',
-    // Nuevos campos para vehículo:
     tipo_vehiculo: '',
     placa_vehiculo: '',
     numero_soat: '',
@@ -79,24 +78,6 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       }
     } else {
       handleSubmit();
-    }
-  };
-
-  // Refs para los inputs del paso 1
-  const nombreRef = useRef();
-  const identidadRef = useRef();
-  const identificacionRef = useRef();
-  const emailRef = useRef();
-  const telefonoRef = useRef();
-  const direccionRef = useRef();
-
-  // Refs para los inputs del paso 3
-  const passwordRef = useRef();
-  const confirmPasswordRef = useRef();
-
-  const handleInputSubmit = (nextRef) => {
-    if (nextRef && nextRef.current) {
-      nextRef.current.focus();
     }
   };
 
@@ -153,15 +134,11 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       </Text>
 
       <Input
-        ref={nombreRef}
         label='Nombre'
         placeholder='Ingresa tu nombre'
         value={formData.nombre_usuario}                      // actualización
         onChangeText={value => setFormData({...formData, nombre_usuario: value})}
         style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(apellidoRef)}
-        blurOnSubmit={false}
       />
 
       <CustomSelect
@@ -173,29 +150,21 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       />
 
       <Input
-        ref={identificacionRef}
         label='Documento de Identidad'
         placeholder='Ingresa tu documento de identidad'
         value={formData.documento_identidad}                // actualización
         onChangeText={value => setFormData({...formData, documento_identidad: value})}
         keyboardType='numeric'
         style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(emailRef)}
-        blurOnSubmit={false}
       />
 
       <Input
-        ref={identidadRef}
         label='Documento de Identidad'
         placeholder='Ingresa tu documento de identidad'
         value={formData.num_identidad}
         onChangeText={value => setFormData({...formData, num_identidad: value})}
         keyboardType='numeric'
         style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(emailRef)}
-        blurOnSubmit={false}
       />
 
       <CustomSelect
@@ -219,19 +188,14 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       />
 
       <Input
-        ref={nombreRef}
         label='Dirección'
         placeholder='Ingresa tu dirección'
         value={formData.direccion}
         onChangeText={value => setFormData({...formData, direccion: value})}
         style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(apellidoRef)}
-        blurOnSubmit={false}
       />
 
       <Input
-        ref={emailRef}
         label='Correo Electrónico'
         placeholder='correo@ejemplo.com'
         value={formData.email}
@@ -239,42 +203,15 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         keyboardType='email-address'
         autoCapitalize='none'
         style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(telefonoRef)}
-        blurOnSubmit={false}
       />
 
       <Input
-        ref={telefonoRef}
         label='Celular'
         placeholder='Ingresa tu número de Celular'
         value={formData.celular}
         onChangeText={value => setFormData({...formData, celular: value})}
         keyboardType='phone-pad'
         style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(passwordRef)}
-        blurOnSubmit={false}
-      />
-
-      <Datepicker
-        label='Vencimiento SOAT'
-        placeholder='Seleccione fecha'
-        date={formData.vencimiento_soat}
-        onSelect={nextDate => setFormData({...formData, vencimiento_soat: nextDate})}
-        min={new Date(1900, 0, 1)} // desde el año 1900
-        max={new Date(2100, 11, 31)} // hasta el año 2100
-        controlStyle={styles.datePickerControl}
-      />
-
-      <Datepicker
-        label='Vencimiento Tecnomecánica'
-        placeholder='Seleccione fecha'
-        date={formData.vencimiento_tecnomecanica}
-        onSelect={nextDate => setFormData({...formData, vencimiento_tecnomecanica: nextDate})}
-        min={new Date(1900, 0, 1)} // desde el año 1900
-        max={new Date(2100, 11, 31)} // hasta el año 2100
-        controlStyle={styles.datePickerControl}
       />
 
       <Text category='s1' style={styles.sectionTitle}>Ingresa tus Documentos</Text>
@@ -288,10 +225,82 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
 
   const renderStep2 = () => (
     <Layout style={styles.stepContainer}>
-      <Text category='h5' style={styles.stepTitle}>Detalles del Negocio</Text>
+      <Text category='h5' style={styles.stepTitle}>Información del Vehículo</Text>
       <Text category='p1' style={styles.stepDescription}>
-        Información sobre tu operación
+        Ingresa la información de tu vehículo
       </Text>
+      <Input
+        label='Tipo de Vehículo'
+        placeholder='Ingresa el tipo de vehículo'
+        value={formData.tipo_vehiculo}
+        onChangeText={value => setFormData({...formData, tipo_vehiculo: value})}
+        style={styles.input}
+      />
+      <Input
+        label='Placa del Vehículo'
+        placeholder='Ingresa la placa del vehículo'
+        value={formData.placa_vehiculo}
+        onChangeText={value => setFormData({...formData, placa_vehiculo: value})}
+        style={styles.input}
+      />
+      <Input
+        label='Número de SOAT'
+        placeholder='Ingresa el número de SOAT'
+        value={formData.numero_soat}
+        onChangeText={value => setFormData({...formData, numero_soat: value})}
+        keyboardType='numeric'
+        style={styles.input}
+      />
+      <Datepicker
+        label='Vencimiento SOAT'
+        placeholder='Seleccione fecha'
+        date={formData.vencimiento_soat}
+        onSelect={nextDate => setFormData({...formData, vencimiento_soat: nextDate})}
+        min={new Date(1900, 0, 1)} // desde el año 1900
+        max={new Date(2100, 11, 31)} // hasta el año 2100
+        controlStyle={styles.datePickerControl}
+      />
+      <Input
+        label='Número de Tecnomecánica'
+        placeholder='Ingresa el número de Tecnomecánica'
+        value={formData.numero_tecnomecanica}
+        onChangeText={value => setFormData({...formData, numero_tecnomecanica: value})}
+        keyboardType='numeric'
+        style={styles.input}
+      />
+      <Datepicker
+        label='Vencimiento Tecnomecánica'
+        placeholder='Seleccione fecha'
+        date={formData.vencimiento_tecnomecanica}
+        onSelect={nextDate => setFormData({...formData, vencimiento_tecnomecanica: nextDate})}
+        min={new Date(1900, 0, 1)} // desde el año 1900
+        max={new Date(2100, 11, 31)} // hasta el año 2100
+        controlStyle={styles.datePickerControl}
+      />
+      <Input
+        label='Capacidad de Carga'
+        placeholder='Ingresa la capacidad de carga'
+        value={formData.capacidad_carga}
+        onChangeText={value => setFormData({...formData, capacidad_carga: value})}
+        keyboardType='numeric'
+        style={styles.input}
+      />
+      <Input
+        label='Latitud'
+        placeholder='Ingresa la latitud'
+        value={formData.latitud}
+        onChangeText={value => setFormData({...formData, latitud: value})}
+        keyboardType='numeric'
+        style={styles.input}
+      />
+      <Input
+        label='Longitud'
+        placeholder='Ingresa la longitud'
+        value={formData.longitud}
+        onChangeText={value => setFormData({...formData, longitud: value})}
+        keyboardType='numeric'
+        style={styles.input}
+      />
     </Layout>
   );
 
@@ -303,7 +312,6 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       </Text>
 
       <Input
-        ref={passwordRef}
         label='Contraseña'
         placeholder='Ingresa tu contraseña'
         value={formData.password}
@@ -311,13 +319,9 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         onChangeText={value => setFormData({...formData, password: value})}
         style={styles.input}
         caption='Debe contener al menos 8 caracteres'
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(confirmPasswordRef)}
-        blurOnSubmit={false}
       />
 
       <Input
-        ref={confirmPasswordRef}
         label='Repetir Contraseña'
         placeholder='Confirma tu contraseña'
         value={formData.confirmPassword}
@@ -326,9 +330,6 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         style={styles.input}
         status={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'danger' : 'basic'}
         caption={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'Las contraseñas no coinciden' : ''}
-        returnKeyType="done"
-        onSubmitEditing={handleNext}
-        blurOnSubmit={true}
       />
 
       <Layout style={styles.termsContainer}>
@@ -456,15 +457,6 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
           showAlert('Campo Requerido', 'Por favor ingrese su dirección', 'warning');
           return false;
         }
-        if (!formData.vencimiento_soat) {
-          showAlert('Campo Requerido', 'Por favor seleccione la fecha de vencimiento del SOAT', 'warning');
-          return false;
-        }
-        if (!formData.vencimiento_tecnomecanica) {
-          showAlert('Campo Requerido', 'Por favor seleccione la fecha de vencimiento de la Tecnomecánica', 'warning');
-          return false;
-        }
-        break;
       case 2:
         // Datos del Vehículo
         if (!formData.tipo_vehiculo) {
@@ -493,6 +485,14 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         }
         if (!formData.longitud) {
           showAlert('Campo Requerido', 'Por favor ingrese la longitud', 'warning');
+          return false;
+        }
+        if (!formData.vencimiento_soat) {
+          showAlert('Campo Requerido', 'Por favor seleccione la fecha de vencimiento del SOAT', 'warning');
+          return false;
+        }
+        if (!formData.vencimiento_tecnomecanica) {
+          showAlert('Campo Requerido', 'Por favor seleccione la fecha de vencimiento de la Tecnomecánica', 'warning');
           return false;
         }
         break;
