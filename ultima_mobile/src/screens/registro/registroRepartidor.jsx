@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView, Alert, Linking } from 'react-native';
+import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView, Alert, Linking, Image, TouchableOpacity } from 'react-native';
 import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, CheckBox } from '@ui-kitten/components';
 import CustomSelect from '../../components/Select/select';
 import Ciudades from '../../ciudades/ciudades';
@@ -47,6 +47,8 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
     password: '',
     confirmPassword: '',
     termsAccepted: false,
+    foto_perfil: null,
+    foto_documento: null,
   });
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
@@ -108,76 +110,57 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
     }
   };
 
+  const selectImage = async (type) => {
+    try {
+      const result = await DocumentPicker.pick({
+        type: [DocumentPicker.types.images, DocumentPicker.types.pdf],
+        allowMultiSelection: false,
+      });
+
+      if (result[0]) {
+        const selectedFile = {
+          uri: result[0].uri,
+          type: result[0].type,
+          name: result[0].name,
+        };
+
+        setFormData(prev => ({
+          ...prev,
+          [type]: selectedFile
+        }));
+      }
+    } catch (error) {
+      if (!DocumentPicker.isCancel(error)) {
+        showAlert('Error', 'No se pudo cargar el documento', 'danger');
+      }
+    }
+  };
+
+  const renderImageSelector = (type, title) => (
+    <TouchableOpacity 
+      style={styles.imageSelector} 
+      onPress={() => selectImage(type)}
+    >
+      {formData[type] ? (
+        <Image 
+          source={{ uri: formData[type].uri }} 
+          style={styles.selectedImage}
+        />
+      ) : (
+        <Layout style={styles.imagePlaceholder}>
+          <Icon name='camera' style={styles.cameraIcon} fill='#8F9BB3'/>
+          <Text category='s1'>{title}</Text>
+        </Layout>
+      )}
+    </TouchableOpacity>
+  );
+
   const renderStep1 = () => (
     <Layout style={styles.stepContainer}>
       <Text category='h5' style={styles.stepTitle}>Información del Conductor</Text>
       <Text category='p1' style={styles.stepDescription}>
         Cuéntanos sobre ti
       </Text>
-
-      <CustomSelect
-        label='País'
-        placeholder='Selecciona tu país'
-        value={formData.pais}
-        onSelect={(value) => setFormData({...formData, pais: value})}
-        options={[
-          { label: 'Colombia', value: 'CO' },
-          { label: 'México', value: 'MX' }
-        ]}
-      />
-
-      <Input
-        ref={nombreSucursalRef}
-        label='Nombre'
-        placeholder='Ingresa tu nombre'
-        value={formData.nombre_sucursal}
-        onChangeText={value => setFormData({...formData, nombre_sucursal: value})}
-        style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(direccionRef)}
-        blurOnSubmit={false}
-      />
-
-      <Input
-        ref={direccionRef}
-        label='Dirección del Negocio'
-        placeholder='Ingresa la dirección'
-        value={formData.direccion_negocio}
-        onChangeText={value => setFormData({...formData, direccion_negocio: value})}
-        style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(nombreRef)}
-        blurOnSubmit={false}
-      />
-
-      <CustomSelect
-        label='Ciudad'
-        placeholder='Selecciona tu ciudad'
-        value={formData.ciudad}
-        onSelect={(value) => setFormData({...formData, ciudad: value})}
-        options={Ciudades}
-        searchable={true} // Habilitamos la búsqueda para el select de ciudades
-      />
-
-      <Text category='h6' style={styles.sectionTitle}>Información del Negocio</Text>
-
-      <CustomSelect
-        label='Categoría Principal de Productos'
-        placeholder='Selecciona una categoría'
-        value={formData.categoria_principal}
-        onSelect={(value) => setFormData({...formData, categoria_principal: value})}
-        options={categorias.map(c => ({ label: c.text, value: c.id }))}
-      />
-
-      <CustomSelect
-        label='Volumen Estimado Mensual'
-        placeholder='Selecciona un rango'
-        value={formData.volumen_estimado}
-        onSelect={(value) => setFormData({...formData, volumen_estimado: value})}
-        options={volumenPaquetes.map(v => ({ label: v.text, value: v.value }))}
-      />
-
-      <Text category='h6' style={styles.sectionTitle}>Información Personal</Text>
 
       <Input
         ref={nombreRef}
@@ -191,24 +174,25 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         blurOnSubmit={false}
       />
 
-      <Input
-        ref={apellidoRef}
-        label='Apellido'
-        placeholder='Ingresa tu apellido'
-        value={formData.apellido}
-        onChangeText={value => setFormData({...formData, apellido: value})}
-        style={styles.input}
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(identificacionRef)}
-        blurOnSubmit={false}
-      />
-
       <CustomSelect
         label='Tipo de Identificación'
         placeholder='Selecciona el tipo'
         value={formData.tipo_identificacion}
         onSelect={(value) => setFormData({...formData, tipo_identificacion: value})}
         options={tiposIdentificacion}
+      />
+
+      <Input
+        ref={identificacionRef}
+        label='Documento de Identidad'
+        placeholder='Ingresa tu documento de identidad'
+        value={formData.num_identificacion}
+        onChangeText={value => setFormData({...formData, num_identificacion: value})}
+        keyboardType='numeric'
+        style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(emailRef)}
+        blurOnSubmit={false}
       />
 
       <Input
@@ -221,6 +205,38 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         style={styles.input}
         returnKeyType="next"
         onSubmitEditing={() => handleInputSubmit(emailRef)}
+        blurOnSubmit={false}
+      />
+
+      <CustomSelect
+        label='País'
+        placeholder='Selecciona tu país'
+        value={formData.pais}
+        onSelect={(value) => setFormData({...formData, pais: value})}
+        options={[
+          { label: 'Colombia', value: 'CO' },
+          { label: 'México', value: 'MX' }
+        ]}
+      />
+
+      <CustomSelect
+        label='Ciudad'
+        placeholder='Selecciona tu ciudad'
+        value={formData.ciudad}
+        onSelect={(value) => setFormData({...formData, ciudad: value})}
+        options={Ciudades}
+        searchable={true} // Habilitamos la búsqueda para el select de ciudades
+      />
+
+      <Input
+        ref={nombreRef}
+        label='Dirección'
+        placeholder='Ingresa tu dirección'
+        value={formData.nombre}
+        onChangeText={value => setFormData({...formData, nombre: value})}
+        style={styles.input}
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(apellidoRef)}
         blurOnSubmit={false}
       />
 
@@ -240,16 +256,52 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
 
       <Input
         ref={telefonoRef}
-        label='Teléfono'
-        placeholder='Ingresa tu número de teléfono'
+        label='Celular'
+        placeholder='Ingresa tu número de Celular'
         value={formData.telefono}
         onChangeText={value => setFormData({...formData, telefono: value})}
         keyboardType='phone-pad'
         style={styles.input}
         returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(passwordRef)}
+        blurOnSubmit={false}
+      />
+
+<Input
+        ref={passwordRef}
+        label='Contraseña'
+        placeholder='Ingresa tu contraseña'
+        value={formData.password}
+        secureTextEntry
+        onChangeText={value => setFormData({...formData, password: value})}
+        style={styles.input}
+        caption='Debe contener al menos 8 caracteres'
+        returnKeyType="next"
+        onSubmitEditing={() => handleInputSubmit(confirmPasswordRef)}
+        blurOnSubmit={false}
+      />
+
+      <Input
+        ref={confirmPasswordRef}
+        label='Confirmar Contraseña'
+        placeholder='Confirma tu contraseña'
+        value={formData.confirmPassword}
+        secureTextEntry
+        onChangeText={value => setFormData({...formData, confirmPassword: value})}
+        style={styles.input}
+        status={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'danger' : 'basic'}
+        caption={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'Las contraseñas no coinciden' : ''}
+        returnKeyType="done"
         onSubmitEditing={handleNext}
         blurOnSubmit={true}
       />
+
+      <Text category='s1' style={styles.sectionTitle}>Ingresa tus Documentos</Text>
+      <Layout style={styles.imageSelectorsContainer}>
+        {renderImageSelector('foto_perfil', 'Foto de Perfil')}
+        {renderImageSelector('foto_documento', 'Foto del Documento')}
+      </Layout>
+      
     </Layout>
   );
 
@@ -451,8 +503,24 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
           showAlert('Campo Requerido', 'Por favor ingrese su correo electrónico', 'warning');
           return false;
         }
-        if (!formData.telefono) {
-          showAlert('Campo Requerido', 'Por favor ingrese su número de teléfono', 'warning');
+        if (!formData.celular) {
+          showAlert('Campo Requerido', 'Por favor ingrese su número de celular', 'warning');
+          return false;
+        }
+        if (!formData.password) {
+          showAlert('Campo Requerido', 'Por favor ingrese una contraseña', 'warning');
+          return false;
+        }
+        if (!formData.confirmPassword) {
+          showAlert('Campo Requerido', 'Por favor confirme su contraseña', 'warning');
+          return false;
+        }
+        if (formData.password !== formData.confirmPassword) {
+          showAlert('Error', 'Las contraseñas no coinciden', 'warning');
+          return false;
+        }
+        if (formData.password.length < 8) {
+          showAlert('Error', 'La contraseña debe tener al menos 8 caracteres', 'warning');
           return false;
         }
         break;
@@ -649,6 +717,39 @@ const styles = StyleSheet.create({
   termsLink: {
     color: '#0086FF',
     textDecorationLine: 'underline',
+  },
+  imageSelectorsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    backgroundColor: 'transparent',
+  },
+  imageSelector: {
+    width: '48%',
+    height: 150,
+    borderRadius: 8,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+  },
+  selectedImage: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  imagePlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F7F9FC',
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    borderColor: '#8F9BB3',
+    borderRadius: 8,
+  },
+  cameraIcon: {
+    width: 32,
+    height: 32,
+    marginBottom: 8,
   },
 });
 
