@@ -229,12 +229,15 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       <Text category='p1' style={styles.stepDescription}>
         Ingresa la información de tu vehículo
       </Text>
-      <Input
+      <CustomSelect
         label='Tipo de Vehículo'
-        placeholder='Ingresa el tipo de vehículo'
+        placeholder='Selecciona el tipo de vehículo'
         value={formData.tipo_vehiculo}
-        onChangeText={value => setFormData({...formData, tipo_vehiculo: value})}
-        style={styles.input}
+        onSelect={(value) => setFormData({ ...formData, tipo_vehiculo: value })}
+        options={[
+          { label: 'Moto', value: 'moto' },
+          { label: 'Carro', value: 'carro' }
+        ]}
       />
       <Input
         label='Placa del Vehículo'
@@ -429,10 +432,6 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
           showAlert('Campo Requerido', 'Por favor ingrese su nombre', 'warning');
           return false;
         }
-        if (!formData.apellido) {
-          showAlert('Campo Requerido', 'Por favor ingrese su apellido', 'warning');
-          return false;
-        }
         if (!formData.tipo_identificacion) {
           showAlert('Campo Requerido', 'Por favor seleccione el tipo de identificación', 'warning');
           return false;
@@ -457,6 +456,7 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
           showAlert('Campo Requerido', 'Por favor ingrese su dirección', 'warning');
           return false;
         }
+        break;
       case 2:
         // Datos del Vehículo
         if (!formData.tipo_vehiculo) {
