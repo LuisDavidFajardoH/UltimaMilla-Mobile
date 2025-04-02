@@ -5,6 +5,7 @@ import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService } from '../../services/authService';
 import CustomDatePicker from '../../components/DatePicker/CustomDatePicker';
+import { LogoutModal } from '../../components/Modal/LogoutModal';
 
 const StatCard = ({ title, value, status, iconName, subvalue }) => (
   <Card style={[styles.statCard, { borderLeftColor: status, borderLeftWidth: 4 }]}>
@@ -62,6 +63,21 @@ export const TableroSucursalScreen = ({ navigation }) => {
   const [startDate, setStartDate] = useState(new Date(new Date().setFullYear(new Date().getFullYear() - 1)));
   const [endDate, setEndDate] = useState(new Date());
   const [showMoreDestinations, setShowMoreDestinations] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [sucursalNombre, setSucursalNombre] = useState('');
+
+  useEffect(() => {
+    const loadSucursalData = async () => {
+      try {
+        const userData = await authService.getUserData();
+        setSucursalNombre(userData?.sucursalNombre || 'Sin nombre');
+      } catch (error) {
+        console.error('Error loading sucursal name:', error);
+      }
+    };
+    
+    loadSucursalData();
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -126,10 +142,19 @@ export const TableroSucursalScreen = ({ navigation }) => {
     <Icon {...props} name='arrow-back'/>
   );
 
+  const handleLogout = async () => {
+    try {
+      await authService.clearAuth();
+      navigation.replace('99 Envios');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
   const renderBackAction = () => (
     <TopNavigationAction 
       icon={BackIcon} 
-      onPress={() => navigation.goBack()}
+      onPress={() => setShowLogoutModal(true)}
     />
   );
 
@@ -184,6 +209,15 @@ export const TableroSucursalScreen = ({ navigation }) => {
 
   const { totals, percentages } = calculateStats();
 
+  const handleMenuPress = () => {
+    // Aquí puedes agregar la lógica para abrir un menú lateral si lo deseas
+    console.log('Menu pressed');
+  };
+
+  const handleProfilePress = () => {
+    setShowLogoutModal(true);
+  };
+
   if (loading && !refreshing) {
     return (
       <Layout style={[styles.loadingContainer, { paddingTop: insets.top }]}>
@@ -204,13 +238,7 @@ export const TableroSucursalScreen = ({ navigation }) => {
   }
 
   return (
-    <Layout style={[styles.container, { paddingTop: insets.top }]}>
-      <TopNavigation
-        title='Tablero de Control'
-        alignment='center'
-        accessoryLeft={renderBackAction}
-      />
-
+    <Layout style={styles.container}>
       <ScrollView 
         style={styles.content}
         refreshControl={
@@ -218,7 +246,6 @@ export const TableroSucursalScreen = ({ navigation }) => {
         }
       >
         {renderDatePicker()}
-
         <Layout style={styles.statsContainer}>
           <StatCard
             title="Total Envíos"
@@ -241,7 +268,6 @@ export const TableroSucursalScreen = ({ navigation }) => {
             status="#FF3D71"
           />
         </Layout>
-
         <Layout style={styles.detailCardsContainer}>
           <DetailCard title="Estado de Envíos" icon="pie-chart-2">
             {Object.entries(data?.estadisticas_pedidos || {})
@@ -293,6 +319,12 @@ export const TableroSucursalScreen = ({ navigation }) => {
           </DetailCard>
         </Layout>
       </ScrollView>
+
+      <LogoutModal
+        visible={showLogoutModal}
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </Layout>
   );
 };

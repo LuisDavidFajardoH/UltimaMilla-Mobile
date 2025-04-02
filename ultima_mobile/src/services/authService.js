@@ -10,13 +10,14 @@ export const authService = {
         throw new Error('Invalid user data or missing token');
       }
 
-      // Asegurarse de que los valores no sean undefined
+      // Asegurarse de que los valores no sean undefined y guardar el nombre de la sucursal
       const dataToStore = {
         id: userData.id || '',
         email: userData.email || '',
         id_rol: userData.id_rol || 0,
         token: userData.token,
-        sucursales: userData.sucursales || []
+        sucursales: userData.sucursales || [],
+        sucursalNombre: userData.sucursales?.[0]?.nombre_sucursal || 'Sin nombre'
       };
 
       await AsyncStorage.setItem(AUTH_TOKEN_KEY, dataToStore.token);
