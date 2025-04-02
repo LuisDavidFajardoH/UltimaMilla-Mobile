@@ -108,29 +108,48 @@ export const TableroSucursalScreen = ({ navigation }) => {
   );
 
   const renderDatePicker = () => (
-    <Layout style={styles.datePickerContainer}>
-      <CustomDatePicker
-        date={startDate}
-        onSelect={setStartDate}
-        max={endDate}
-        label='Fecha Inicio'
-        style={styles.datePickerMargin}
-      />
-      <CustomDatePicker
-        date={endDate}
-        onSelect={setEndDate}
-        min={startDate}
-        max={new Date()}
-        label='Fecha Fin'
-        style={styles.datePickerMargin}
-      />
+    <Card style={styles.datePickerCard}>
+      <Text category='h6' style={styles.datePickerTitle}>Rango de Fechas</Text>
+      <Layout style={styles.datePickerContainer}>
+        <Layout style={styles.datePickerColumn}>
+          <CustomDatePicker
+            date={startDate}
+            onSelect={(nextDate) => {
+              setStartDate(nextDate);
+              if (nextDate > endDate) {
+                setEndDate(nextDate);
+              }
+            }}
+            max={new Date()}
+            label='Desde'
+            style={styles.datePicker}
+          />
+        </Layout>
+        <Layout style={styles.datePickerColumn}>
+          <CustomDatePicker
+            date={endDate}
+            onSelect={(nextDate) => {
+              setEndDate(nextDate);
+              if (nextDate < startDate) {
+                setStartDate(nextDate);
+              }
+            }}
+            min={startDate}
+            max={new Date()}
+            label='Hasta'
+            style={styles.datePicker}
+          />
+        </Layout>
+      </Layout>
       <Button
         onPress={fetchDashboardData}
         style={styles.updateButton}
+        status='primary'
+        accessoryLeft={(props) => <Icon {...props} name='refresh-outline'/>}
       >
         Actualizar Datos
       </Button>
-    </Layout>
+    </Card>
   );
 
   const { totals, percentages } = calculateStats();
@@ -260,7 +279,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     width: '45%',
-    margin: '2.5%',
+    margin: '2.5%', 
     borderRadius: 12,
   },
   statCardContent: {
@@ -315,15 +334,31 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#FF3D71',
   },
+  datePickerCard: {
+    margin: 16,
+    borderRadius: 12,
+    backgroundColor: '#fff',
+  },
+  datePickerTitle: {
+    marginBottom: 16,
+    color: '#2E3A59',
+    fontWeight: '600',
+  },
   datePickerContainer: {
-    padding: 16,
+    flexDirection: 'row',
     backgroundColor: 'transparent',
+    marginBottom: 16,
+  },
+  datePickerColumn: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
   },
   datePicker: {
-    marginBottom: 8,
+    marginBottom: 0,
   },
   updateButton: {
-    marginTop: 16,
+    borderRadius: 8,
   },
   statsContainer: {
     flexDirection: 'row',
