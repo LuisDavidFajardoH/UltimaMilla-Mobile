@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { StyleSheet, Platform, ScrollView, KeyboardAvoidingView, Alert, Linking, Image, TouchableOpacity } from 'react-native';
-import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, CheckBox } from '@ui-kitten/components';
+import { Button, Text, Layout, Input, TopNavigation, TopNavigationAction, Icon, CheckBox, Datepicker } from '@ui-kitten/components';
 import CustomSelect from '../../components/Select/select';
 import Ciudades from '../../ciudades/ciudades';
 import { CustomAlert } from '../../components/Alert/CustomAlert';
@@ -12,43 +12,34 @@ const tiposIdentificacion = [
   { label: 'Tarjeta de Identidad', value: 'TI' }
 ];
 
-const categorias = [
-  { id: '1', text: 'Ropa y Accesorios' },
-  { id: '2', text: 'Tecnología' },
-  { id: '3', text: 'Alimentos y Bebidas' },
-  { id: '4', text: 'Cosméticos y Belleza' },
-  { id: '5', text: 'Libros y Papelería' },
-  { id: '6', text: 'Hogar y Decoración' },
-  { id: '7', text: 'Otros' },
-];
-
-const volumenPaquetes = [
-  { id: '1', text: '1 a 100 paquetes', value: '1-100' },
-  { id: '2', text: 'Entre 100 y 4.000 paquetes', value: '100-4000' },
-  { id: '3', text: 'Más de 4.000 paquetes', value: '4000+' },
-];
-
 export const RegisterDeliveryScreen = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
+    nombre_usuario: '',              // antes: nombre
+    documento_identidad: '',         // antes: num_identificacion
+    num_identidad: '',               // se puede quedar si se requiere, o eliminarlo
     pais: '',
-    nombre_sucursal: '',
-    direccion_negocio: '',
     ciudad: '',
-    nombre: '',
-    apellido: '',
-    tipo_identificacion: '',
-    num_identificacion: '',
+    direccion: '',                   // se usa "direccion"
     email: '',
-    telefono: '',
-    categoria_principal: '',
-    volumen_estimado: '',
+    celular: '',
+    capacidad_carga: '',             // antes: volumen_estimado
     password: '',
     confirmPassword: '',
     termsAccepted: false,
     foto_perfil: null,
     foto_documento: null,
+    vencimiento_soat: new Date(),
+    vencimiento_tecnomecanica: new Date(),
+    tipo_identificacion: '',
+    // Nuevos campos para vehículo:
+    tipo_vehiculo: '',
+    placa_vehiculo: '',
+    numero_soat: '',
+    numero_tecnomecanica: '',
+    latitud: '',
+    longitud: '',
   });
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
@@ -92,13 +83,12 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
   };
 
   // Refs para los inputs del paso 1
-  const nombreSucursalRef = useRef();
-  const direccionRef = useRef();
   const nombreRef = useRef();
-  const apellidoRef = useRef();
+  const identidadRef = useRef();
   const identificacionRef = useRef();
   const emailRef = useRef();
   const telefonoRef = useRef();
+  const direccionRef = useRef();
 
   // Refs para los inputs del paso 3
   const passwordRef = useRef();
@@ -166,8 +156,8 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         ref={nombreRef}
         label='Nombre'
         placeholder='Ingresa tu nombre'
-        value={formData.nombre}
-        onChangeText={value => setFormData({...formData, nombre: value})}
+        value={formData.nombre_usuario}                      // actualización
+        onChangeText={value => setFormData({...formData, nombre_usuario: value})}
         style={styles.input}
         returnKeyType="next"
         onSubmitEditing={() => handleInputSubmit(apellidoRef)}
@@ -186,8 +176,8 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         ref={identificacionRef}
         label='Documento de Identidad'
         placeholder='Ingresa tu documento de identidad'
-        value={formData.num_identificacion}
-        onChangeText={value => setFormData({...formData, num_identificacion: value})}
+        value={formData.documento_identidad}                // actualización
+        onChangeText={value => setFormData({...formData, documento_identidad: value})}
         keyboardType='numeric'
         style={styles.input}
         returnKeyType="next"
@@ -196,11 +186,11 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       />
 
       <Input
-        ref={identificacionRef}
-        label='Número de Identificación'
-        placeholder='Ingresa tu número de identificación'
-        value={formData.num_identificacion}
-        onChangeText={value => setFormData({...formData, num_identificacion: value})}
+        ref={identidadRef}
+        label='Documento de Identidad'
+        placeholder='Ingresa tu documento de identidad'
+        value={formData.num_identidad}
+        onChangeText={value => setFormData({...formData, num_identidad: value})}
         keyboardType='numeric'
         style={styles.input}
         returnKeyType="next"
@@ -232,8 +222,8 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         ref={nombreRef}
         label='Dirección'
         placeholder='Ingresa tu dirección'
-        value={formData.nombre}
-        onChangeText={value => setFormData({...formData, nombre: value})}
+        value={formData.direccion}
+        onChangeText={value => setFormData({...formData, direccion: value})}
         style={styles.input}
         returnKeyType="next"
         onSubmitEditing={() => handleInputSubmit(apellidoRef)}
@@ -258,8 +248,8 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         ref={telefonoRef}
         label='Celular'
         placeholder='Ingresa tu número de Celular'
-        value={formData.telefono}
-        onChangeText={value => setFormData({...formData, telefono: value})}
+        value={formData.celular}
+        onChangeText={value => setFormData({...formData, celular: value})}
         keyboardType='phone-pad'
         style={styles.input}
         returnKeyType="next"
@@ -267,33 +257,24 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
         blurOnSubmit={false}
       />
 
-<Input
-        ref={passwordRef}
-        label='Contraseña'
-        placeholder='Ingresa tu contraseña'
-        value={formData.password}
-        secureTextEntry
-        onChangeText={value => setFormData({...formData, password: value})}
-        style={styles.input}
-        caption='Debe contener al menos 8 caracteres'
-        returnKeyType="next"
-        onSubmitEditing={() => handleInputSubmit(confirmPasswordRef)}
-        blurOnSubmit={false}
+      <Datepicker
+        label='Vencimiento SOAT'
+        placeholder='Seleccione fecha'
+        date={formData.vencimiento_soat}
+        onSelect={nextDate => setFormData({...formData, vencimiento_soat: nextDate})}
+        min={new Date(1900, 0, 1)} // desde el año 1900
+        max={new Date(2100, 11, 31)} // hasta el año 2100
+        controlStyle={styles.datePickerControl}
       />
 
-      <Input
-        ref={confirmPasswordRef}
-        label='Confirmar Contraseña'
-        placeholder='Confirma tu contraseña'
-        value={formData.confirmPassword}
-        secureTextEntry
-        onChangeText={value => setFormData({...formData, confirmPassword: value})}
-        style={styles.input}
-        status={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'danger' : 'basic'}
-        caption={formData.password !== formData.confirmPassword && formData.confirmPassword ? 'Las contraseñas no coinciden' : ''}
-        returnKeyType="done"
-        onSubmitEditing={handleNext}
-        blurOnSubmit={true}
+      <Datepicker
+        label='Vencimiento Tecnomecánica'
+        placeholder='Seleccione fecha'
+        date={formData.vencimiento_tecnomecanica}
+        onSelect={nextDate => setFormData({...formData, vencimiento_tecnomecanica: nextDate})}
+        min={new Date(1900, 0, 1)} // desde el año 1900
+        max={new Date(2100, 11, 31)} // hasta el año 2100
+        controlStyle={styles.datePickerControl}
       />
 
       <Text category='s1' style={styles.sectionTitle}>Ingresa tus Documentos</Text>
@@ -311,22 +292,6 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
       <Text category='p1' style={styles.stepDescription}>
         Información sobre tu operación
       </Text>
-
-      <CustomSelect
-        label='Categoría Principal de Productos'
-        placeholder='Selecciona una categoría'
-        value={formData.categoria_principal}
-        onSelect={(value) => setFormData({...formData, categoria_principal: value})}
-        options={categorias.map(c => ({ label: c.text, value: c.id }))}
-      />
-
-      <CustomSelect
-        label='Volumen Estimado Mensual'
-        placeholder='Selecciona un rango'
-        value={formData.volumen_estimado}
-        onSelect={(value) => setFormData({...formData, volumen_estimado: value})}
-        options={volumenPaquetes.map(v => ({ label: v.text, value: v.value }))}
-      />
     </Layout>
   );
 
@@ -389,101 +354,77 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
   );
 
   const handleSubmit = async () => {
-    try {
-      // Transform form data to match API requirements
-      const apiData = {
-        nombre: formData.nombre,
-        apellido: formData.apellido,
-        cantidad: parseInt(formData.volumen_estimado === '1-100' ? 1 : formData.volumen_estimado === '100-4000' ? 2 : 3),
-        ciudad: formData.ciudad,
-        codigo_pais: formData.pais === 'CO' ? 1 : 2,
-        direccion: formData.direccion_negocio,
-        email: formData.email,
-        id_rol: 3,
-        nombre_sucursal: formData.nombre_sucursal,
-        num_identificacion: formData.num_identificacion,
-        pais: formData.pais === 'CO' ? 1 : 2,
-        password: formData.password,
-        password_confirmation: formData.confirmPassword,
-        producto: categorias.find(c => c.id === formData.categoria_principal)?.text || '',
-        telefono: formData.telefono,
-        terminosCondiciones: formData.termsAccepted,
-        tipo_identificacion: formData.tipo_identificacion,
-      };
+    // Helper para formatear la fecha como YYYY-MM-DD
+    const formatDate = (date) => {
+      const d = new Date(date);
+      const month = (d.getMonth() + 1).toString().padStart(2, '0');
+      const day = d.getDate().toString().padStart(2, '0');
+      return `${d.getFullYear()}-${month}-${day}`;
+    };
 
-      const response = await fetch('https://api.99envios.app/api/auth/register_sucursal', {
+    let formDataToSend = new FormData();
+    formDataToSend.append('nombre_usuario', formData.nombre_usuario);
+    formDataToSend.append('telefono', formData.celular);
+    formDataToSend.append('direccion', formData.direccion);
+    formDataToSend.append('documento_identidad', formData.documento_identidad);
+    formDataToSend.append('email', formData.email);
+    formDataToSend.append('pais', formData.pais === 'CO' ? 1 : 2);
+    if (formData.foto_perfil) {
+      formDataToSend.append('foto_cara', formData.foto_perfil);
+    }
+    formDataToSend.append('capacidad_carga', formData.capacidad_carga);
+    formDataToSend.append('tipo_vehiculo', formData.tipo_vehiculo);
+    formDataToSend.append('placa_vehiculo', formData.placa_vehiculo);
+    formDataToSend.append('ciudad', formData.ciudad);
+    formDataToSend.append('password', formData.password);
+    formDataToSend.append('password_confirmation', formData.confirmPassword);
+    formDataToSend.append('id_rol', 4);
+    formDataToSend.append('estado', 0);
+    formDataToSend.append('tipo_identificacion', formData.tipo_identificacion);
+    formDataToSend.append('numero_soat', formData.numero_soat);
+    formDataToSend.append('numero_tecnomecanica', formData.numero_tecnomecanica);
+    formDataToSend.append('latitud', parseFloat(formData.latitud).toFixed(1));
+    formDataToSend.append('longitud', parseFloat(formData.longitud).toFixed(1));
+    formDataToSend.append('fecha_vencimiento_soat', formatDate(formData.vencimiento_soat));
+    formDataToSend.append('fecha_vencimiento_tecnomecanica', formatDate(formData.vencimiento_tecnomecanica));
+    if (formData.foto_documento) {
+      formDataToSend.append('foto_documento', formData.foto_documento);
+    }
+    try {
+      const response = await fetch('https://api.99envios.app/api/auth/register_repartidor', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           'Accept': 'application/json',
         },
-        body: JSON.stringify(apiData),
+        body: formDataToSend,
       });
-
       const data = await response.json();
       console.log('API Response:', data);
-
       if (!response.ok) {
-        const errorMessage = data.message || 
-                           (typeof data.error === 'string' ? data.error : JSON.stringify(data.error)) ||
-                           'Error en el registro';
-        
-        console.error('Error Response:', {
-          status: response.status,
-          data: data,
-          message: errorMessage
-        });
-        
+        const errorMessage = data.message || (typeof data.error === 'string' ? data.error : JSON.stringify(data.error)) || 'Error en el registro';
+        console.error('Error Response:', { status: response.status, data, message: errorMessage });
         showAlert('Error', errorMessage, 'danger');
         return;
       }
-
-      showAlert(
-        '¡Registro Exitoso!', 
-        'Tu cuenta ha sido creada correctamente',
-        'success'
-      );
-
-      // Navegar después de que el usuario cierre el alert
+      showAlert('¡Registro Exitoso!', 'Tu cuenta ha sido creada correctamente', 'success');
       setTimeout(() => {
         navigation.replace('99 Envios');
       }, 1500);
-
     } catch (error) {
-      console.error('Full error details:', {
-        message: error.message,
-        stack: error.stack,
-        originalError: error
-      });
-      
-      showAlert(
-        'Error',
-        `Error al registrar: ${error.message}. Por favor intente nuevamente.`,
-        'danger'
-      );
+      console.error('Full error details:', error);
+      showAlert('Error', `Error al registrar: ${error.message}. Por favor intente nuevamente.`, 'danger');
     }
   };
 
   const validateStep = (step) => {
     switch (step) {
       case 1:
+        // Datos del Conductor
         if (!formData.pais) {
           showAlert('Campo Requerido', 'Por favor seleccione un país', 'warning');
           return false;
         }
-        if (!formData.nombre_sucursal) {
-          showAlert('Campo Requerido', 'Por favor ingrese el nombre del negocio', 'warning');
-          return false;
-        }
-        if (!formData.direccion_negocio) {
-          showAlert('Campo Requerido', 'Por favor ingrese la dirección del negocio', 'warning');
-          return false;
-        }
-        if (!formData.ciudad) {
-          showAlert('Campo Requerido', 'Por favor seleccione una ciudad', 'warning');
-          return false;
-        }
-        if (!formData.nombre) {
+        if (!formData.nombre_usuario) {
           showAlert('Campo Requerido', 'Por favor ingrese su nombre', 'warning');
           return false;
         }
@@ -495,8 +436,8 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
           showAlert('Campo Requerido', 'Por favor seleccione el tipo de identificación', 'warning');
           return false;
         }
-        if (!formData.num_identificacion) {
-          showAlert('Campo Requerido', 'Por favor ingrese su número de identificación', 'warning');
+        if (!formData.documento_identidad) {
+          showAlert('Campo Requerido', 'Por favor ingrese su documento de identidad', 'warning');
           return false;
         }
         if (!formData.email) {
@@ -507,6 +448,56 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
           showAlert('Campo Requerido', 'Por favor ingrese su número de celular', 'warning');
           return false;
         }
+        if (!formData.ciudad) {
+          showAlert('Campo Requerido', 'Por favor seleccione una ciudad', 'warning');
+          return false;
+        }
+        if (!formData.direccion) {
+          showAlert('Campo Requerido', 'Por favor ingrese su dirección', 'warning');
+          return false;
+        }
+        if (!formData.vencimiento_soat) {
+          showAlert('Campo Requerido', 'Por favor seleccione la fecha de vencimiento del SOAT', 'warning');
+          return false;
+        }
+        if (!formData.vencimiento_tecnomecanica) {
+          showAlert('Campo Requerido', 'Por favor seleccione la fecha de vencimiento de la Tecnomecánica', 'warning');
+          return false;
+        }
+        break;
+      case 2:
+        // Datos del Vehículo
+        if (!formData.tipo_vehiculo) {
+          showAlert('Campo Requerido', 'Por favor seleccione el tipo de vehículo', 'warning');
+          return false;
+        }
+        if (!formData.placa_vehiculo) {
+          showAlert('Campo Requerido', 'Por favor ingrese la placa del vehículo', 'warning');
+          return false;
+        }
+        if (!formData.numero_soat) {
+          showAlert('Campo Requerido', 'Por favor ingrese el número de SOAT', 'warning');
+          return false;
+        }
+        if (!formData.numero_tecnomecanica) {
+          showAlert('Campo Requerido', 'Por favor ingrese el número de Tecnomecánica', 'warning');
+          return false;
+        }
+        if (!formData.capacidad_carga) {
+          showAlert('Campo Requerido', 'Por favor ingrese la capacidad de carga', 'warning');
+          return false;
+        }
+        if (!formData.latitud) {
+          showAlert('Campo Requerido', 'Por favor ingrese la latitud', 'warning');
+          return false;
+        }
+        if (!formData.longitud) {
+          showAlert('Campo Requerido', 'Por favor ingrese la longitud', 'warning');
+          return false;
+        }
+        break;
+      case 3:
+        // Validación de contraseña y términos
         if (!formData.password) {
           showAlert('Campo Requerido', 'Por favor ingrese una contraseña', 'warning');
           return false;
@@ -516,33 +507,11 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
           return false;
         }
         if (formData.password !== formData.confirmPassword) {
-          showAlert('Error', 'Las contraseñas no coinciden', 'warning');
+          showAlert('Error', 'Las contraseñas no coinciden', 'danger');
           return false;
         }
         if (formData.password.length < 8) {
           showAlert('Error', 'La contraseña debe tener al menos 8 caracteres', 'warning');
-          return false;
-        }
-        break;
-
-      case 2:
-        if (!formData.categoria_principal) {
-          showAlert('Campo Requerido', 'Por favor seleccione la categoría principal de productos', 'warning');
-          return false;
-        }
-        if (!formData.volumen_estimado) {
-          showAlert('Campo Requerido', 'Por favor seleccione el volumen estimado mensual', 'warning');
-          return false;
-        }
-        break;
-
-      case 3:
-        if (!formData.password || formData.password.length < 8) {
-          showAlert('Error', 'La contraseña debe tener al menos 8 caracteres', 'danger');
-          return false;
-        }
-        if (formData.password !== formData.confirmPassword) {
-          showAlert('Error', 'Las contraseñas no coinciden', 'danger');
           return false;
         }
         if (!formData.termsAccepted) {
@@ -550,6 +519,8 @@ export const RegisterDeliveryScreen = ({ navigation }) => {
           return false;
         }
         break;
+      default:
+        return false;
     }
     return true;
   };
@@ -750,6 +721,16 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     marginBottom: 8,
+  },
+  datePicker: {
+    marginBottom: 16,
+    backgroundColor: '#FFFFFF', // fondo blanco para el selector de fechas
+    borderRadius: 8,
+  },
+  datePickerControl: {
+    backgroundColor: '#FFFFFF', // fondo blanco para el cuadro del selector
+    borderRadius: 8,
+    marginBottom: 16,
   },
 });
 
