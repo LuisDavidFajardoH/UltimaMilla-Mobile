@@ -1,32 +1,137 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, RefreshControl, Platform } from 'react-native';
+import { StyleSheet, ScrollView, RefreshControl, Platform, TouchableOpacity } from 'react-native';
 import { Layout, Text, Card, Button, ButtonGroup, Spinner, Modal, Icon, Divider } from '@ui-kitten/components';
 import DateTimePicker, { DateTimePickerAndroid } from '@react-native-community/datetimepicker';
 import axios from 'axios';
 import { authService } from '../../services/authService';
+import CustomDatePicker from '../../components/DatePicker/CustomDatePicker';
 
 const DatePickerButton = ({ label, date, onPress }) => (
-  <Button
-    appearance="ghost"
-    status="basic"
-    style={styles.datePickerButton}
+  <TouchableOpacity 
+    style={styles.datePickerTouchable}
     onPress={onPress}
-    accessoryLeft={(props) => <Icon {...props} name="calendar-outline"/>}
   >
-    {date ? date.toLocaleDateString() : 'Seleccionar fecha'}
-  </Button>
+    <Layout style={styles.datePickerInner}>
+      <Icon name="calendar-outline" style={styles.datePickerIcon} fill="#8F9BB3"/>
+      <Text style={styles.datePickerText}>
+        {date ? date.toLocaleDateString() : 'Seleccionar fecha'}
+      </Text>
+    </Layout>
+  </TouchableOpacity>
+);
+
+const FilterHeader = ({ 
+  tipoFecha, 
+  setTipoFecha, 
+  fechaDesde, 
+  fechaHasta, 
+  setFechaDesde,
+  setFechaHasta
+}) => (
+  <Card style={styles.filterCard}>
+    <Text category="s1" style={styles.filterTitle}>Periodo de Reporte</Text>
+    <Layout style={styles.filterButtons}>
+      <Button
+        size='small'
+        appearance={tipoFecha === 'hoy' ? 'filled' : 'outline'}
+        onPress={() => setTipoFecha('hoy')}
+        style={styles.filterButton}
+      >
+        Hoy
+      </Button>
+      <Button
+        size='small'
+        appearance={tipoFecha === 'semana' ? 'filled' : 'outline'}
+        onPress={() => setTipoFecha('semana')}
+        style={styles.filterButton}
+      >
+        Esta Semana
+      </Button>
+      <Button
+        size='small'
+        appearance={tipoFecha === 'mes' ? 'filled' : 'outline'}
+        onPress={() => setTipoFecha('mes')}
+        style={styles.filterButton}
+      >
+        Este Mes
+      </Button>
+      <Button
+        size='small'
+        appearance={tipoFecha === 'personalizado' ? 'filled' : 'outline'}
+        onPress={() => setTipoFecha('personalizado')}
+        style={styles.filterButton}
+      >
+        Personalizado
+      </Button>
+    </Layout>
+
+    {tipoFecha === 'personalizado' && (
+      <Layout style={styles.dateRangeContainer}>
+        <Layout style={styles.datePickerColumn}>
+          <CustomDatePicker
+            date={fechaDesde}
+            onSelect={(nextDate) => {
+              setFechaDesde(nextDate);
+              if (nextDate > fechaHasta) {
+                setFechaHasta(nextDate);
+              }
+            }}
+            max={new Date()}
+            label='Desde'
+            style={styles.datePicker}
+          />
+        </Layout>
+        <Layout style={styles.datePickerColumn}>
+          <CustomDatePicker
+            date={fechaHasta}
+            onSelect={(nextDate) => {
+              setFechaHasta(nextDate);
+              if (nextDate < fechaDesde) {
+                setFechaDesde(nextDate);
+              }
+            }}
+            min={fechaDesde}
+            max={new Date()}
+            label='Hasta'
+            style={styles.datePicker}
+          />
+        </Layout>
+      </Layout>
+    )}
+  </Card>
 );
 
 const ReportesScreen = ({ navigation }) => {
   const [reporte, setReporte] = useState([]);
   const [tipoFecha, setTipoFecha] = useState('hoy');
-  const [fechaDesde, setFechaDesde] = useState(null);
-  const [fechaHasta, setFechaHasta] = useState(null);
+  // Initialize dates with current values
+  const [fechaDesde, setFechaDesde] = useState(new Date());
+  const [fechaHasta, setFechaHasta] = useState(new Date());
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showFromPicker, setShowFromPicker] = useState(false);
   const [showToPicker, setShowToPicker] = useState(false);
+
+  useEffect(() => {
+    // Set initial dates based on tipoFecha
+    if (tipoFecha === 'hoy') {
+      setFechaDesde(new Date());
+      setFechaHasta(new Date());
+    } else if (tipoFecha === 'semana') {
+      const today = new Date();
+      const weekAgo = new Date(today);
+      weekAgo.setDate(weekAgo.getDate() - 7);
+      setFechaDesde(weekAgo);
+      setFechaHasta(today);
+    } else if (tipoFecha === 'mes') {
+      const today = new Date();
+      const monthAgo = new Date(today);
+      monthAgo.setMonth(monthAgo.getMonth() - 1);
+      setFechaDesde(monthAgo);
+      setFechaHasta(today);
+    }
+  }, [tipoFecha]);
 
   const obtenerReporteRepartidores = async () => {
     try {
@@ -120,25 +225,58 @@ const ReportesScreen = ({ navigation }) => {
 
   const onChangeFromDate = (event, selectedDate) => {
     setShowFromPicker(false);
-    if (event.type === 'set' && selectedDate) setFechaDesde(selectedDate);
+    if (event.type === 'set' && selectedDate) {
+      setFechaDesde(selectedDate);
+      // After setting "desde", automatically show "hasta" picker
+      setTimeout(() => {
+        showDatePicker(false);
+      }, 500);
+    }
   };
 
   const onChangeToDate = (event, selectedDate) => {
     setShowToPicker(false);
-    if (event.type === 'set' && selectedDate) setFechaHasta(selectedDate);
+    if (event.type === 'set' && selectedDate) {
+      setFechaHasta(selectedDate);
+    }
   };
 
   const showDatePicker = (isFrom) => {
+    // Ensure only one picker is shown at a time
+    if (isFrom) {
+      setShowToPicker(false);
+    } else {
+      setShowFromPicker(false);
+    }
+
     if (Platform.OS === 'android') {
       DateTimePickerAndroid.open({
         value: isFrom ? (fechaDesde || new Date()) : (fechaHasta || new Date()),
         mode: 'date',
-        onChange: (event, date) => onDateChange(event, date, isFrom),
+        onChange: (event, date) => {
+          if (event.type === 'set' && date) {
+            if (isFrom) {
+              setFechaDesde(date);
+              // After setting "desde", automatically show "hasta" picker
+              setTimeout(() => {
+                showDatePicker(false);
+              }, 500);
+            } else {
+              setFechaHasta(date);
+            }
+          }
+        },
         maximumDate: new Date(),
         minimumDate: isFrom ? null : fechaDesde,
+        positiveButton: { label: 'Aceptar', textColor: 'blue' },
+        negativeButton: { label: 'Cancelar', textColor: 'gray' }
       });
     } else {
-      isFrom ? setShowFromPicker(true) : setShowToPicker(true);
+      if (isFrom) {
+        setShowFromPicker(true);
+      } else {
+        setShowToPicker(true);
+      }
     }
   };
 
@@ -155,58 +293,14 @@ const ReportesScreen = ({ navigation }) => {
     <Layout style={styles.container}>
       {renderHeader()}
       <ScrollView refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}>
-        <Card style={styles.filterCard}>
-          <Layout style={styles.selectContainer}>
-            <Text category="label" style={styles.selectLabel}>Filtrar por fecha</Text>
-            <ButtonGroup style={styles.buttonGroup}>
-              <Button
-                size='small'
-                appearance={tipoFecha === 'hoy' ? 'filled' : 'outline'}
-                onPress={() => setTipoFecha('hoy')}
-              >
-                Todos
-              </Button>
-              <Button
-                size='small'
-                appearance={tipoFecha === 'personalizado' ? 'filled' : 'outline'}
-                onPress={() => setTipoFecha('personalizado')}
-              >
-                Personalizado
-              </Button>
-            </ButtonGroup>
-            {tipoFecha === 'personalizado' && (
-              <Layout style={styles.datePickersContainer}>
-                <Layout style={styles.datePickerColumn}>
-                  <Text category="label">Desde</Text>
-                  <DatePickerButton
-                    label="Desde"
-                    date={fechaDesde}
-                    onPress={() => showDatePicker(true)}
-                  />
-                </Layout>
-                <Layout style={styles.datePickerColumn}>
-                  <Text category="label">Hasta</Text>
-                  <DatePickerButton
-                    label="Hasta"
-                    date={fechaHasta}
-                    onPress={() => showDatePicker(false)}
-                  />
-                </Layout>
-              </Layout>
-            )}
-            {Platform.OS === 'android' ? (
-              <>
-                {showFromPicker && renderDatePicker(true, fechaDesde, onChangeFromDate)}
-                {showToPicker && renderDatePicker(true, fechaHasta, onChangeToDate, fechaDesde)}
-              </>
-            ) : (
-              <>
-                {renderDatePicker(showFromPicker, fechaDesde, onChangeFromDate)}
-                {renderDatePicker(showToPicker, fechaHasta, onChangeToDate, fechaDesde)}
-              </>
-            )}
-          </Layout>
-        </Card>
+        <FilterHeader
+          tipoFecha={tipoFecha}
+          setTipoFecha={setTipoFecha}
+          fechaDesde={fechaDesde}
+          fechaHasta={fechaHasta}
+          setFechaDesde={setFechaDesde}
+          setFechaHasta={setFechaHasta}
+        />
         <Divider style={styles.divider}/>
         <Layout style={styles.resumenContainer}>
           {renderResumenCard('Total Pedidos', reporte.length, 'shopping-cart-outline')}
@@ -222,38 +316,61 @@ const ReportesScreen = ({ navigation }) => {
         <Layout style={styles.listContainer}>
           {reporte.map((r, index) => (
             <Card key={index} style={styles.rowCard}>
-              <Text style={styles.rowItem}><Text style={styles.rowLabel}>Repartidor:</Text> {r.nombre_repartidor || "Sin asignar"}</Text>
-              <Text style={styles.rowItem}><Text style={styles.rowLabel}>Pedidos:</Text> {r.total_pedidos || "0"}</Text>
-              <Text style={[styles.rowItem, styles.clickable]} onPress={() => { /* handle Entregado click */ }}>
-                <Text style={styles.rowLabel}>Entregados:</Text> {r.entregados || "0"}
-              </Text>
-              <Text style={[styles.rowItem, styles.clickable]} onPress={() => { /* handle Devuelto click */ }}>
-                <Text style={styles.rowLabel}>Devuelto:</Text> {r.devueltos || "0"}
-              </Text>
-              <Text style={[styles.rowItem, styles.clickable]} onPress={() => { /* handle En Proceso click */ }}>
-                <Text style={styles.rowLabel}>En Proceso:</Text> {r.en_proceso || "0"}
-              </Text>
-              <Text style={styles.rowItem}>
-                <Text style={styles.rowLabel}>En Espera:</Text> {r.en_espera || "0"}
-              </Text>
-              <Text style={styles.rowItem}>
-                <Text style={styles.rowLabel}>Pago Digital:</Text> {r.pago_digital || "0"}
-              </Text>
-              <Text style={styles.rowItem}>
-                <Text style={styles.rowLabel}>Contra Reembolso:</Text> {r.contra_entrega || "0"}
-              </Text>
-              <Text style={styles.rowItem}>
-                <Text style={styles.rowLabel}>Total Recaudo:</Text> {r.total_pagos || "0"}
-              </Text>
-              <Text style={styles.rowItem}>
-                <Text style={styles.rowLabel}>Costo Envio:</Text> {r.costo_envio || "0"}
-              </Text>
-              <Text style={styles.rowItem}>
-                <Text style={styles.rowLabel}>FEE:</Text> {r.fee99 || "0"}
-              </Text>
-              <Text style={styles.rowItem}>
-                <Text style={styles.rowLabel}>Total:</Text> {new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(r.total || 0)}
-              </Text>
+              <Layout style={styles.cardHeader}>
+                <Text style={styles.repartidorName}>{r.nombre_repartidor || "Sin asignar"}</Text>
+              </Layout>
+              <Layout style={styles.statsGrid}>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>Pedidos</Text>
+                  <Text style={styles.statValue}>{r.total_pedidos || "0"}</Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>Entregados</Text>
+                  <Text style={[styles.statValue, styles.clickableValue]} onPress={() => { /* handle Entregado click */ }}>
+                    {r.entregados || "0"}
+                  </Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>Devuelto</Text>
+                  <Text style={[styles.statValue, styles.clickableValue]} onPress={() => { /* handle Devuelto click */ }}>
+                    {r.devueltos || "0"}
+                  </Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>En Proceso</Text>
+                  <Text style={[styles.statValue, styles.clickableValue]} onPress={() => { /* handle En Proceso click */ }}>
+                    {r.en_proceso || "0"}
+                  </Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>En Espera</Text>
+                  <Text style={styles.statValue}>{r.en_espera || "0"}</Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>Pago Digital</Text>
+                  <Text style={styles.statValue}>{r.pago_digital || "0"}</Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>Contra Reembolso</Text>
+                  <Text style={styles.statValue}>{r.contra_entrega || "0"}</Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>Total Recaudo</Text>
+                  <Text style={styles.statValue}>{r.total_pagos || "0"}</Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>Costo Envio</Text>
+                  <Text style={styles.statValue}>{r.costo_envio || "0"}</Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>FEE</Text>
+                  <Text style={styles.statValue}>{r.fee99 || "0"}</Text>
+                </Layout>
+                <Layout style={styles.statItem}>
+                  <Text style={styles.statLabel}>Total</Text>
+                  <Text style={styles.statValue}>{new Intl.NumberFormat('es-CO', { style: 'currency', currency: 'COP' }).format(r.total || 0)}</Text>
+                </Layout>
+              </Layout>
             </Card>
           ))}
           <Card style={styles.totalCard}>
@@ -292,42 +409,59 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   filterCard: {
-    marginHorizontal: 16,
-    marginBottom: 16,
+    margin: 16,
     borderRadius: 12,
-    padding: 16,
     backgroundColor: '#fff',
     elevation: 3,
     shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
   },
-  selectContainer: {
+  filterTitle: {
+    color: '#2E3A59',
+    fontWeight: '600',
+    marginBottom: 16,
+  },
+  filterButtons: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
     backgroundColor: 'transparent',
   },
-  selectLabel: {
-    marginBottom: 8,
-    color: '#2E3A59',
-  },
-  buttonGroup: {
-    borderRadius: 8,
-    marginBottom: 12,
-  },
-  datePickersContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 16,
-  },
-  datePickerColumn: {
+  filterButton: {
     flex: 1,
+    minWidth: '45%',
+    borderRadius: 8,
+  },
+  dateRangeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    backgroundColor: 'transparent',
+  },
+  datePickerWrapper: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   datePickerButton: {
-    justifyContent: 'flex-start',
-    borderColor: '#E4E9F2',
-    borderWidth: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    backgroundColor: '#F7F9FC',
     borderRadius: 8,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#E4E9F2',
+  },
+  dateIcon: {
+    width: 20,
+    height: 20,
+    marginRight: 8,
+  },
+  dateText: {
+    color: '#2E3A59',
+    fontSize: 14,
   },
   divider: {
     marginHorizontal: 16,
@@ -367,21 +501,51 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   rowCard: {
-    marginBottom: 16,
+    marginHorizontal: 16,
+    marginBottom: 12,
     borderRadius: 12,
-    padding: 12,
+    backgroundColor: '#fff',
     elevation: 2,
   },
-  rowItem: {
-    fontSize: 16,
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+    backgroundColor: 'transparent',
+  },
+  repartidorName: {
+    fontWeight: '600',
     color: '#2E3A59',
-    marginVertical: 2,
+    fontSize: 16,
   },
-  rowLabel: {
-    fontWeight: 'bold',
-    color: '#0086FF',
+  statsGrid: {
+    padding: 16,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    backgroundColor: 'transparent',
   },
-  clickable: {
+  statItem: {
+    flex: 1,
+    minWidth: '45%',
+    backgroundColor: '#F7F9FC',
+    padding: 12,
+    borderRadius: 8,
+  },
+  statLabel: {
+    color: '#8F9BB3',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  statValue: {
+    color: '#2E3A59',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  clickableValue: {
     color: '#0086FF',
     textDecorationLine: 'underline',
   },
@@ -398,6 +562,21 @@ const styles = StyleSheet.create({
   modalBackdrop: {
     backgroundColor: 'rgba(0, 0, 0, 0.5)',
   },
+  datePickerColumn: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
+  },
+  datePicker: {
+    marginBottom: 0,
+  },
+  datePickerTouchable: undefined,
+  datePickerInner: undefined,
+  datePickerIcon: undefined,
+  datePickerText: undefined,
+  pickerOverlay: undefined,
+  pickerContainer: undefined,
+  pickerButton: undefined,
 });
 
 export default ReportesScreen;
