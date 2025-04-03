@@ -5,20 +5,51 @@ import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService } from '../../services/authService';
 import CustomDatePicker from '../../components/DatePicker/CustomDatePicker';
+import { LogoutModal } from '../../components/Modal/LogoutModal';
 
 const StatCard = ({ title, value, status, iconName, subvalue }) => (
-  <Card style={styles.statCard}>
+  <Card style={[styles.statCard, { borderLeftColor: status, borderLeftWidth: 4 }]}>
     <Layout style={styles.statCardContent}>
-      <Layout style={[styles.statIconContainer, { backgroundColor: `${status}10` }]}>
+      <Layout style={[styles.statIconContainer, { backgroundColor: `${status}15` }]}>
         <Icon
           style={[styles.statIcon, { tintColor: status }]}
           name={iconName}
           pack='eva'
         />
       </Layout>
-      <Text category='h6' style={styles.statValue}>{value}</Text>
-      {subvalue && <Text category='s2' style={styles.statSubValue}>{subvalue}</Text>}
-      <Text category='s1' style={styles.statTitle}>{title}</Text>
+      <Layout style={styles.statTextContainer}>
+        <Text category='h5' style={styles.statValue}>{value}</Text>
+        {subvalue && (
+          <Layout style={[styles.statBadge, { backgroundColor: `${status}15` }]}>
+            <Text style={[styles.statSubValue, { color: status }]}>{subvalue}</Text>
+          </Layout>
+        )}
+        <Text category='s1' style={styles.statTitle}>{title}</Text>
+      </Layout>
+    </Layout>
+  </Card>
+);
+
+const DetailItem = ({ label, value, status }) => (
+  <Layout style={styles.detailItem}>
+    <Layout style={styles.detailLabelContainer}>
+      <View style={[styles.statusDot, { backgroundColor: status }]} />
+      <Text style={styles.detailLabel}>{label}</Text>
+    </Layout>
+    <Text style={styles.detailValue}>{value}</Text>
+  </Layout>
+);
+
+const DetailCard = ({ title, icon, children, style }) => (
+  <Card style={[styles.detailCard, style]}>
+    <Layout style={styles.detailCardHeader}>
+      <Layout style={styles.detailTitleContainer}>
+        <Icon name={icon} style={styles.detailIcon} fill="#0086FF"/>
+        <Text category='h6' style={styles.detailTitle}>{title}</Text>
+      </Layout>
+    </Layout>
+    <Layout style={styles.detailContent}>
+      {children}
     </Layout>
   </Card>
 );
@@ -32,6 +63,21 @@ export const TableroSucursalScreen = ({ navigation }) => {
   const [startDate, setStartDate] = useState(new Date(new Date().setFullYear(new Date().getFullYear() - 1)));
   const [endDate, setEndDate] = useState(new Date());
   const [showMoreDestinations, setShowMoreDestinations] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+  const [sucursalNombre, setSucursalNombre] = useState('');
+
+  useEffect(() => {
+    const loadSucursalData = async () => {
+      try {
+        const userData = await authService.getUserData();
+        setSucursalNombre(userData?.sucursalNombre || 'Sin nombre');
+      } catch (error) {
+        console.error('Error loading sucursal name:', error);
+      }
+    };
+    
+    loadSucursalData();
+  }, []);
 
   const fetchDashboardData = async () => {
     try {
@@ -96,10 +142,19 @@ export const TableroSucursalScreen = ({ navigation }) => {
     <Icon {...props} name='arrow-back'/>
   );
 
+  const handleLogout = async () => {
+    try {
+      await authService.clearAuth();
+      navigation.replace('99 Envios');
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error);
+    }
+  };
+
   const renderBackAction = () => (
     <TopNavigationAction 
       icon={BackIcon} 
-      onPress={() => navigation.goBack()}
+      onPress={() => setShowLogoutModal(true)}
     />
   );
 
@@ -108,32 +163,60 @@ export const TableroSucursalScreen = ({ navigation }) => {
   );
 
   const renderDatePicker = () => (
-    <Layout style={styles.datePickerContainer}>
-      <CustomDatePicker
-        date={startDate}
-        onSelect={setStartDate}
-        max={endDate}
-        label='Fecha Inicio'
-        style={styles.datePickerMargin}
-      />
-      <CustomDatePicker
-        date={endDate}
-        onSelect={setEndDate}
-        min={startDate}
-        max={new Date()}
-        label='Fecha Fin'
-        style={styles.datePickerMargin}
-      />
+    <Card style={styles.datePickerCard}>
+      <Text category='h6' style={styles.datePickerTitle}>Rango de Fechas</Text>
+      <Layout style={styles.datePickerContainer}>
+        <Layout style={styles.datePickerColumn}>
+          <CustomDatePicker
+            date={startDate}
+            onSelect={(nextDate) => {
+              setStartDate(nextDate);
+              if (nextDate > endDate) {
+                setEndDate(nextDate);
+              }
+            }}
+            max={new Date()}
+            label='Desde'
+            style={styles.datePicker}
+          />
+        </Layout>
+        <Layout style={styles.datePickerColumn}>
+          <CustomDatePicker
+            date={endDate}
+            onSelect={(nextDate) => {
+              setEndDate(nextDate);
+              if (nextDate < startDate) {
+                setStartDate(nextDate);
+              }
+            }}
+            min={startDate}
+            max={new Date()}
+            label='Hasta'
+            style={styles.datePicker}
+          />
+        </Layout>
+      </Layout>
       <Button
         onPress={fetchDashboardData}
         style={styles.updateButton}
+        status='primary'
+        accessoryLeft={(props) => <Icon {...props} name='refresh-outline'/>}
       >
         Actualizar Datos
       </Button>
-    </Layout>
+    </Card>
   );
 
   const { totals, percentages } = calculateStats();
+
+  const handleMenuPress = () => {
+    // Aquí puedes agregar la lógica para abrir un menú lateral si lo deseas
+    console.log('Menu pressed');
+  };
+
+  const handleProfilePress = () => {
+    setShowLogoutModal(true);
+  };
 
   if (loading && !refreshing) {
     return (
@@ -155,13 +238,7 @@ export const TableroSucursalScreen = ({ navigation }) => {
   }
 
   return (
-    <Layout style={[styles.container, { paddingTop: insets.top }]}>
-      <TopNavigation
-        title='Tablero de Control'
-        alignment='center'
-        accessoryLeft={renderBackAction}
-      />
-
+    <Layout style={styles.container}>
       <ScrollView 
         style={styles.content}
         refreshControl={
@@ -169,7 +246,6 @@ export const TableroSucursalScreen = ({ navigation }) => {
         }
       >
         {renderDatePicker()}
-
         <Layout style={styles.statsContainer}>
           <StatCard
             title="Total Envíos"
@@ -192,50 +268,63 @@ export const TableroSucursalScreen = ({ navigation }) => {
             status="#FF3D71"
           />
         </Layout>
-
         <Layout style={styles.detailCardsContainer}>
-          <Card style={styles.detailCard}>
-            <Text category='h6'>Estado de Envíos</Text>
+          <DetailCard title="Estado de Envíos" icon="pie-chart-2">
             {Object.entries(data?.estadisticas_pedidos || {})
               .filter(([key]) => key !== 'total')
               .map(([estado, cantidad], index) => (
-                <Layout key={index} style={styles.statRow}>
-                  <Text>{estado}</Text>
-                  <Text>{cantidad}</Text>
-                </Layout>
-              ))
-            }
-          </Card>
+                <DetailItem
+                  key={index}
+                  label={estado}
+                  value={cantidad}
+                  status={
+                    estado === 'Entregado' ? '#00E096' :
+                    estado === 'Devuelto' ? '#FF3D71' :
+                    estado === 'En proceso' ? '#0095FF' : '#8F9BB3'
+                  }
+                />
+              ))}
+          </DetailCard>
 
-          <Card style={styles.detailCard}>
-            <Text category='h6'>Destinos Más Usados</Text>
+          <DetailCard title="Destinos Más Usados" icon="pin">
             {(showMoreDestinations ? data?.destinos_comunes : data?.destinos_comunes?.slice(0, 5))?.map((destino, index) => (
-              <Layout key={index} style={styles.statRow}>
-                <Text>{destino.ciudad}</Text>
-                <Text>{destino.cantidad}</Text>
-              </Layout>
+              <DetailItem
+                key={index}
+                label={destino.ciudad}
+                value={destino.cantidad}
+                status="#639aff"
+              />
             ))}
             {data?.destinos_comunes?.length > 5 && (
               <Button
                 appearance='ghost'
+                status='primary'
+                style={styles.verMasButton}
                 onPress={() => setShowMoreDestinations(!showMoreDestinations)}
               >
                 {showMoreDestinations ? 'Ver menos' : 'Ver más'}
               </Button>
             )}
-          </Card>
+          </DetailCard>
 
-          <Card style={styles.detailCard}>
-            <Text category='h6'>Pedidos No Asignados</Text>
+          <DetailCard title="Pedidos No Asignados" icon="alert-triangle">
             {data?.registros_No_Asignados?.registros?.map((registro, index) => (
-              <Layout key={index} style={styles.statRow}>
-                <Text>Pedido #{registro.ID_pedido}</Text>
-                <Text>{registro.fecha_pedido}</Text>
-              </Layout>
+              <DetailItem
+                key={index}
+                label={`Pedido #${registro.ID_pedido}`}
+                value={registro.fecha_pedido}
+                status="#FF3D71"
+              />
             ))}
-          </Card>
+          </DetailCard>
         </Layout>
       </ScrollView>
+
+      <LogoutModal
+        visible={showLogoutModal}
+        onConfirm={handleLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </Layout>
   );
 };
@@ -248,47 +337,178 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  header: {
+  statsContainer: {
     padding: 16,
     backgroundColor: 'transparent',
   },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 8,
-    backgroundColor: 'transparent',
-  },
   statCard: {
-    width: '45%',
-    margin: '2.5%',
-    borderRadius: 12,
+    marginBottom: 16,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
   },
   statCardContent: {
+    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'transparent',
+    padding: 8,
   },
   statIconContainer: {
     padding: 12,
-    borderRadius: 30,
-    backgroundColor: 'rgba(0, 149, 255, 0.1)',
-    marginBottom: 8,
+    borderRadius: 12,
+    marginRight: 16,
   },
   statIcon: {
-    width: 24,
-    height: 24,
+    width: 28,
+    height: 28,
+  },
+  statTextContainer: {
+    flex: 1,
+    backgroundColor: 'transparent',
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
+    color: '#2E3A59',
     marginBottom: 4,
+  },
+  statBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginBottom: 8,
   },
   statSubValue: {
     fontSize: 14,
-    color: '#8F9BB3',
+    fontWeight: '600',
   },
   statTitle: {
     color: '#8F9BB3',
-    textAlign: 'center',
+  },
+  datePickerCard: {
+    margin: 16,
+    borderRadius: 16,
+    backgroundColor: '#fff',
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+  },
+  datePickerTitle: {
+    marginBottom: 16,
+    color: '#2E3A59',
+    fontWeight: '600',
+  },
+  datePickerContainer: {
+    flexDirection: 'row',
+    backgroundColor: 'transparent',
+    marginBottom: 16,
+  },
+  datePickerColumn: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    paddingHorizontal: 8,
+  },
+  detailCard: {
+    marginBottom: 16,
+    borderRadius: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+  },
+  detailCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+    backgroundColor: 'transparent',
+  },
+  detailTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  detailTitle: {
+    marginLeft: 8,
+    color: '#2E3A59',
+    fontWeight: '600',
+  },
+  detailIcon: {
+    width: 24,
+    height: 24,
+  },
+  detailContent: {
+    backgroundColor: 'transparent',
+    marginTop: 8,
+  },
+  detailItem: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: 'transparent',
+    borderBottomWidth: 1,
+    borderBottomColor: '#F7F9FC',
+  },
+  detailLabelContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+    backgroundColor: 'transparent',
+  },
+  statusDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    marginRight: 8,
+  },
+  detailLabel: {
+    color: '#2E3A59',
+    fontSize: 15,
+    flex: 1,
+  },
+  detailValue: {
+    color: '#8F9BB3',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  verMasButton: {
+    marginTop: 8,
+  },
+  statRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#E4E9F2',
+    backgroundColor: 'transparent',
+  },
+  updateButton: {
+    borderRadius: 12,
+    backgroundColor: '#0086FF',
+  },
+  detailCardsContainer: {
+    padding: 16,
+    backgroundColor: 'transparent',
   },
   loadingContainer: {
     flex: 1,
@@ -315,47 +535,8 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     color: '#FF3D71',
   },
-  datePickerContainer: {
-    padding: 16,
-    backgroundColor: 'transparent',
-  },
   datePicker: {
-    marginBottom: 8,
-  },
-  updateButton: {
-    marginTop: 16,
-  },
-  statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 8,
-    backgroundColor: 'transparent',
-  },
-  detailCardsContainer: {
-    padding: 16,
-    backgroundColor: 'transparent',
-  },
-  detailCard: {
-    marginBottom: 16,
-    borderRadius: 12,
-  },
-  statRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E4E9F2',
-    backgroundColor: 'transparent',
-  },
-  datePickerWrapper: {
-    backgroundColor: 'transparent',
-  },
-  dateLabel: {
-    marginBottom: 4,
-    color: '#2E3A59',
-  },
-  datePickerMargin: {
-    marginBottom: 16,
+    marginBottom: 0,
   },
 });
 

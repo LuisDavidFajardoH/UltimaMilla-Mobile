@@ -80,13 +80,14 @@ function HomeScreen({ navigation }) {
         throw new Error(data.message || 'Error en el servidor');
       }
 
-      // Preparar los datos del usuario con la nueva estructura
+      // Preparar los datos del usuario incluyendo el nombre de la sucursal
       const userData = {
         id: data.user.id,
         email: data.user.email,
         id_rol: data.user.id_rol,
         token: data.token, // El token está en la raíz del objeto
-        sucursales: data.sucursales || [] // Las sucursales están en la raíz del objeto
+        sucursales: data.sucursales || [], // Las sucursales están en la raíz del objeto
+        sucursalNombre: data.sucursales?.[0]?.nombre_sucursal || 'Sin nombre'
       };
 
       // Guardar datos de autenticación
@@ -95,19 +96,21 @@ function HomeScreen({ navigation }) {
       // Navegar según el rol
       switch(data.user.id_rol) {
         case 1:
-          navigation.replace('Admin');
+          navigation.replace('AdminDashboard');
           break;
         case 2:
-          navigation.replace('Conductor');
-          break;
         case 4:
-          navigation.replace('Conductor');
+          navigation.replace('ConductorDashboard');
           break;
         case 3:
           // Si tiene sucursales, navegar al tablero
           if (data.sucursales && data.sucursales.length > 0) {
-            navigation.replace('Tablero', { 
-              sucursal: data.sucursales[0] 
+            navigation.replace('SucursalDashboard', { 
+              screen: 'TableroSucursal',
+              params: {
+                sucursal: data.sucursales[0],
+                sucursalNombre: data.sucursales[0].nombre_sucursal
+              }
             });
           } else {
             showAlert('Error', 'No tiene sucursales asignadas', 'danger');
