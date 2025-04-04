@@ -9,7 +9,10 @@ import { RegisterBusinessScreen } from '../screens/registro/registroSucursal';
 import { RegisterDeliveryScreen } from '../screens/registro/registroRepartidor';
 import { TableroSucursalScreen } from '../screens/TableroSucursal/TableroSucursal';
 import { TableroConductorScreen } from '../screens/TableroConductor/TableroConductor';
-import ReportesScreen from '../screens/Reportes/ReportesScreen'; // Update import to use default import
+import ReportesScreen from '../screens/Reportes/ReportesScreen';
+// Conductor
+import EnEspera from '../screens/MenuConductor/EnEspera';
+import EntregaFallida from '../screens/MenuConductor/EntregaFallida';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -109,6 +112,9 @@ function AppNavigator() {
         <Stack.Screen name="RegisterDelivery" component={RegisterDeliveryScreen} />
         <Stack.Screen name="SucursalDashboard" component={DrawerNavigator} />
         <Stack.Screen name="ConductorDashboard" component={TableroConductorScreen} />
+        {/* Conductor */}
+        <Stack.Screen name="EnEspera" component={EnEspera} />
+        <Stack.Screen name="EntregaFallida" component={EntregaFallida} />
       </Stack.Navigator>
     </NavigationContainer>
   );

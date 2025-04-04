@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, RefreshControl, View } from 'react-native';
+import { StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { Layout, Text, Card, Button, Spinner, Icon, TopNavigation, TopNavigationAction, Toggle } from '@ui-kitten/components';
-import { EvaIconsPack } from '@ui-kitten/eva-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService } from '../../services/authService';
 
-const StatCard = ({ title, value, status, iconName, subvalue }) => (
-  <Card style={styles.statCard}>
-    <Layout style={styles.statCardContent}>
-      <Layout style={[styles.statIconContainer, { backgroundColor: `${status}10` }]}>
+const StatCard = ({ title, value, status, iconName, subvalue, onPress }) => (
+  <Card style={styles.earningCard} onPress={onPress}>
+    <Layout style={styles.earningCardContent}>
+      <Layout style={styles.earningTitleContainer}>
         <Icon
-          style={[styles.statIcon, { tintColor: status }]}
+          style={[styles.earningIcon, { tintColor: status }]}
           name={iconName}
-          pack='eva'
+          pack="eva"
         />
+        <Text category="s1" style={[styles.earningTitle, { color: status }]}>
+          {title}
+        </Text>
       </Layout>
-      {value !== undefined && <Text category='h6' style={styles.statValue}>{value}</Text>}
-      {subvalue && <Text category='s2' style={styles.statSubValue}>{subvalue}</Text>}
-      <Text category='s1' style={styles.statTitle}>{title}</Text>
-      <Button
-        size='small'
-        appearance='ghost'
-        status='basic'
-        style={styles.detailsButton}
-      >
-        Ver detalles
-      </Button>
+      {value !== undefined && (
+        <Text category="h6" style={[styles.earningValue, { color: status }]}>
+          {value}
+        </Text>
+      )}
+      {subvalue && (
+        <Text category="s2" style={styles.statSubValue}>
+          {subvalue}
+        </Text>
+      )}
     </Layout>
   </Card>
 );
@@ -63,6 +64,14 @@ const StatusSwitch = ({ isActive, onToggle }) => (
       </Layout>
     </Layout>
   </Card>
+);
+
+const BackIcon = (props) => (
+  <Icon {...props} name="arrow-back" />
+);
+
+const renderBackAction = (navigation) => (
+  <TopNavigationAction icon={BackIcon} onPress={() => navigation.goBack()} />
 );
 
 export const TableroConductorScreen = ({ navigation }) => {
@@ -184,6 +193,7 @@ export const TableroConductorScreen = ({ navigation }) => {
             value={totals.enEspera}
             iconName="clock-outline"
             status="#FFA94D"
+            onPress={() => navigation.navigate('EnEspera')}
           />
           <StatCard
             title="Por Entregar"
@@ -196,6 +206,7 @@ export const TableroConductorScreen = ({ navigation }) => {
             value={totals.entregasFallidas}
             iconName="alert-triangle-outline"
             status="#FF3D71"
+            onPress={() => navigation.navigate('EntregaFallida')}
           />
           <StatCard
             title="Entregados"
@@ -233,41 +244,49 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   statCard: {
-    width: '45%',
-    margin: '2.5%',
+    width: '100%', // Ocupa el 100% del ancho para una sola columna
+    marginBottom: 8, // Espaciado entre tarjetas
     borderRadius: 12,
     minHeight: 140,
   },
   statCardContent: {
-    alignItems: 'center',
+    flexDirection: 'column', // Cambia a diseño en columna
+    alignItems: 'flex-start', // Alinea los elementos al inicio
     backgroundColor: 'transparent',
-    paddingBottom: 4,
+    padding: 12, // Espaciado interno
   },
-  statIconContainer: {
-    padding: 12,
-    borderRadius: 30,
+  statIconTitleContainer: {
+    flexDirection: 'row', // Mantiene el ícono y el título en una fila
+    alignItems: 'center',
+    padding: 8, // Espaciado interno
+    borderRadius: 16,
     backgroundColor: 'rgba(0, 149, 255, 0.1)',
-    marginBottom: 8,
+    marginRight: 12, // Espaciado entre el contenedor del ícono/título y los demás elementos
   },
   statIcon: {
     width: 24,
     height: 24,
+    marginRight: 8, // Espaciado entre el ícono y el título
+  },
+  statTitle: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    textAlign: 'left', // Alinea el texto a la izquierda
   },
   statValue: {
-    fontSize: 24,
+    fontSize: 16,
     fontWeight: 'bold',
-    marginBottom: 4,
+    color: '#2E3A59',
+    marginLeft: 12, // Espaciado entre el valor y el contenedor del ícono/título
   },
   statSubValue: {
     fontSize: 14,
     color: '#8F9BB3',
-  },
-  statTitle: {
-    color: '#8F9BB3',
-    textAlign: 'center',
+    marginTop: 4, // Espaciado entre el subvalor y el valor principal
   },
   detailsButton: {
-    marginTop: 8,
+    alignSelf: 'flex-start', // Alinea el botón al inicio horizontalmente
+    marginTop: 12, // Espaciado entre el botón y los demás elementos
     fontSize: 12,
   },
   loadingContainer: {
@@ -296,9 +315,7 @@ const styles = StyleSheet.create({
     color: '#FF3D71',
   },
   statsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    padding: 8,
+    flexDirection: 'column', // Cambia a diseño en columna
     backgroundColor: 'transparent',
   },
   earningCard: {
