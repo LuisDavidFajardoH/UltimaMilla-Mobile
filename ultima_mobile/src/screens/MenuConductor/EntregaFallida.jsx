@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ActivityIndicator, Button as RNButton, Platform } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, Button as RNButton, Platform, ScrollView, RefreshControl } from 'react-native';
 import { Layout, Text, Card, Icon, TopNavigation, TopNavigationAction } from '@ui-kitten/components';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -24,29 +24,9 @@ const EnEspera = ({ navigation }) => {
   const [hasta, setHasta] = useState(null);
   const [showDesdePicker, setShowDesdePicker] = useState(false);
   const [showHastaPicker, setShowHastaPicker] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    const fetchPedidos = async () => {
-      try {
-        const userData = await authService.getUserData();
-        const response = await axios.get(`https://api.99envios.app/api/reporte-pedidos/Devuelto/${userData.id}`);
-        const data = response.data;
-        const mappedPedidos = data.map((pedido) => ({
-          id_pedido: pedido.ID_pedido,
-          nombre_cliente: pedido.nombre_cliente,
-          costo_envio: `$${parseFloat(pedido.costo_envio).toFixed(2)}`,
-          fecha_pedido: pedido.fecha_pedido,
-          estado_pedido: pedido.estado_pedido,
-        }));
-        setPedidos(mappedPedidos);
-        setFilteredPedidos(mappedPedidos);
-      } catch (error) {
-        console.error('Error fetching pedidos:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPedidos();
   }, []);
 
@@ -129,6 +109,33 @@ const EnEspera = ({ navigation }) => {
     }
   };
 
+  const onRefresh = React.useCallback(() => {
+    setRefreshing(true);
+    fetchPedidos();
+  }, []);
+
+  const fetchPedidos = async () => {
+    try {
+      const userData = await authService.getUserData();
+      const response = await axios.get(`https://api.99envios.app/api/reporte-pedidos/Devuelto/${userData.id}`);
+      const data = response.data;
+      const mappedPedidos = data.map((pedido) => ({
+        id_pedido: pedido.ID_pedido,
+        nombre_cliente: pedido.nombre_cliente,
+        costo_envio: `$${parseFloat(pedido.costo_envio).toFixed(2)}`,
+        fecha_pedido: pedido.fecha_pedido,
+        estado_pedido: pedido.estado_pedido,
+      }));
+      setPedidos(mappedPedidos);
+      setFilteredPedidos(mappedPedidos);
+    } catch (error) {
+      console.error('Error fetching pedidos:', error);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
   if (loading) {
     return (
       <Layout style={styles.container}>
@@ -144,71 +151,117 @@ const EnEspera = ({ navigation }) => {
         alignment="center"
         accessoryLeft={() => renderBackAction(navigation)}
       />
-      <View style={styles.datePickersContainer}>
-        <View style={styles.datePicker}>
-          <RNButton 
-            title={`Desde: ${desde ? desde.toLocaleDateString() : 'Seleccionar'}`} 
-            onPress={() => showDatePicker(true)} 
+      
+      <ScrollView 
+        style={styles.scrollView}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={['#7380EC']}
           />
-          {Platform.OS !== 'android' && showDesdePicker && (
-            <DateTimePicker
-              value={desde || new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, date) => onDateChange(event, date, true)}
-              maximumDate={new Date()} // Limita la fecha máxima al día actual
-            />
-          )}
-        </View>
-        <View style={styles.datePicker}>
-          <RNButton 
-            title={`Hasta: ${hasta ? hasta.toLocaleDateString() : 'Seleccionar'}`} 
-            onPress={() => showDatePicker(false)} 
-            disabled={!desde} // Deshabilita el botón si no se ha seleccionado fecha "desde"
-          />
-          {Platform.OS !== 'android' && showHastaPicker && (
-            <DateTimePicker
-              value={hasta || new Date()}
-              mode="date"
-              display="default"
-              onChange={(event, date) => onDateChange(event, date, false)}
-              maximumDate={new Date()} // Limita la fecha máxima al día actual
-              minimumDate={desde} // La fecha mínima es la fecha seleccionada en "desde"
-            />
-          )}
-        </View>
-      </View>
-      {filteredPedidos.map((pedido) => (
-        <Card key={pedido.id_pedido} style={styles.card}>
-          <View style={styles.header}>
-            <FontAwesome5 name="box" size={20} color="#7380EC" />
-            <Text category="h6" style={styles.cardTitle}>
-              PEDIDO #{pedido.id_pedido}
-            </Text>
+        }
+      >
+        {/* Card for the date filter */}
+        <Card style={styles.card}>
+          <Text category="h6" style={styles.title}>
+            Filtrar por rango de fechas
+          </Text>
+          <Layout style={styles.underline} />
+          <Text category="p2" style={styles.description}>
+            Seleccione un rango de fechas para filtrar los pedidos fallidos.
+          </Text>
+          
+          <View style={styles.datePickersContainer}>
+            <View style={styles.datePicker}>
+              <RNButton 
+                title={`Desde: ${desde ? desde.toLocaleDateString() : 'Seleccionar'}`} 
+                onPress={() => showDatePicker(true)}
+                color="#7380EC" 
+              />
+              {Platform.OS !== 'android' && showDesdePicker && (
+                <DateTimePicker
+                  value={desde || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, date) => onDateChange(event, date, true)}
+                  maximumDate={new Date()}
+                />
+              )}
+            </View>
+            <View style={styles.datePicker}>
+              <RNButton 
+                title={`Hasta: ${hasta ? hasta.toLocaleDateString() : 'Seleccionar'}`} 
+                onPress={() => showDatePicker(false)} 
+                disabled={!desde}
+                color="#7380EC"
+              />
+              {Platform.OS !== 'android' && showHastaPicker && (
+                <DateTimePicker
+                  value={hasta || new Date()}
+                  mode="date"
+                  display="default"
+                  onChange={(event, date) => onDateChange(event, date, false)}
+                  maximumDate={new Date()}
+                  minimumDate={desde}
+                />
+              )}
+            </View>
           </View>
-          <View style={styles.row}>
-            <FontAwesome5 name="user" size={16} color="black" />
-            <Text style={styles.text}>{pedido.nombre_cliente}</Text>
-          </View>
-          <View style={styles.row}>
-            <FontAwesome5 name="money-bill-wave" size={16} color="black" />
-            <Text style={styles.text}>{pedido.costo_envio}</Text>
-          </View>
-          <View style={styles.row}>
-            <FontAwesome5 name="calendar-alt" size={16} color="black" />
-            <Text style={styles.text}>{pedido.fecha_pedido}</Text>
-          </View>
-          <View style={styles.row}>
-            <View style={styles.statusCircle} />
-            <Text style={styles.text}>{pedido.estado_pedido}</Text>
-          </View>
-          <RNButton
-            title="Ver detalles"
-            color="#7380EC"
-            onPress={() => console.log(`Detalles del pedido ${pedido.id_pedido}`)}
-          />
         </Card>
-      ))}
+
+        {/* Results heading */}
+        {filteredPedidos.length > 0 && (
+          <Text category="h6" style={styles.resultsTitle}>
+            Mostrando {filteredPedidos.length} resultados
+          </Text>
+        )}
+        
+        {/* Show message when no orders are found */}
+        {filteredPedidos.length === 0 && (
+          <Card style={styles.card}>
+            <Text style={styles.noResultsText}>
+              No se encontraron pedidos en el rango de fechas seleccionado.
+            </Text>
+          </Card>
+        )}
+
+        {/* List of orders */}
+        {filteredPedidos.map((pedido) => (
+          <Card key={pedido.id_pedido} style={styles.card}>
+            <View style={styles.header}>
+              <FontAwesome5 name="box" size={20} color="#7380EC" />
+              <Text category="h6" style={styles.cardTitle}>
+                PEDIDO #{pedido.id_pedido}
+              </Text>
+            </View>
+            <View style={styles.row}>
+              <FontAwesome5 name="user" size={16} color="black" />
+              <Text style={styles.text}>{pedido.nombre_cliente}</Text>
+            </View>
+            <View style={styles.row}>
+              <FontAwesome5 name="money-bill-wave" size={16} color="black" />
+              <Text style={styles.text}>{pedido.costo_envio}</Text>
+            </View>
+            <View style={styles.row}>
+              <FontAwesome5 name="calendar-alt" size={16} color="black" />
+              <Text style={styles.text}>{pedido.fecha_pedido}</Text>
+            </View>
+            <View style={styles.row}>
+              <View style={styles.statusCircle} />
+              <Text style={styles.text}>{pedido.estado_pedido}</Text>
+            </View>
+            <RNButton
+              title="Ver detalles"
+              color="#7380EC"
+              onPress={() => console.log(`Detalles del pedido ${pedido.id_pedido}`)}
+            />
+          </Card>
+        ))}
+        
+        {/* Add some extra padding at the bottom for better scrolling */}
+        <View style={styles.scrollBottomPadding} />
+      </ScrollView>
     </Layout>
   );
 };
@@ -216,7 +269,14 @@ const EnEspera = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+  scrollView: {
+    flex: 1,
     padding: 16,
+    paddingTop: 0, // Reduce el padding superior para acercar el filtro a la barra de navegación
+  },
+  scrollBottomPadding: {
+    height: 20,
   },
   datePickersContainer: {
     flexDirection: 'row',
@@ -229,7 +289,7 @@ const styles = StyleSheet.create({
   },
   card: {
     padding: 16,
-    marginVertical: 8,
+    marginVertical: 6, // Reduce el margen vertical de las tarjetas
     borderRadius: 8,
   },
   title: {
@@ -247,6 +307,7 @@ const styles = StyleSheet.create({
   description: {
     color: '#555',
     textAlign: 'center',
+    marginBottom: 16,
   },
   header: {
     flexDirection: 'row',
@@ -280,6 +341,16 @@ const styles = StyleSheet.create({
     marginTop: 16,
     backgroundColor: '#7380EC',
     borderColor: '#7380EC',
+  },
+  resultsTitle: {
+    marginVertical: 8,
+    textAlign: 'center',
+    color: '#7380EC',
+  },
+  noResultsText: {
+    textAlign: 'center',
+    color: '#555',
+    padding: 16,
   },
 });
 
