@@ -13,6 +13,7 @@ import ReportesScreen from '../screens/Reportes/ReportesScreen';
 // Conductor
 import EnEspera from '../screens/MenuConductor/EnEspera';
 import EntregaFallida from '../screens/MenuConductor/EntregaFallida';
+import Entregado from '../screens/MenuConductor/Entregado';
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -115,6 +116,7 @@ function AppNavigator() {
         {/* Conductor */}
         <Stack.Screen name="EnEspera" component={EnEspera} />
         <Stack.Screen name="EntregaFallida" component={EntregaFallida} />
+        <Stack.Screen name="Entregado" component={Entregado} />
       </Stack.Navigator>
     </NavigationContainer>
   );

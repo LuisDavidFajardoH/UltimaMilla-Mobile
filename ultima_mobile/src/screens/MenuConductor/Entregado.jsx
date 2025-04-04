@@ -15,7 +15,7 @@ const renderBackAction = (navigation) => (
   <TopNavigationAction icon={BackIcon} onPress={() => navigation.goBack()} />
 );
 
-const EntregaFallida = ({ navigation }) => {
+const Entregado = ({ navigation }) => {
   const insets = useSafeAreaInsets();
   const [pedidos, setPedidos] = useState([]);
   const [filteredPedidos, setFilteredPedidos] = useState([]);
@@ -117,7 +117,7 @@ const EntregaFallida = ({ navigation }) => {
   const fetchPedidos = async () => {
     try {
       const userData = await authService.getUserData();
-      const response = await axios.get(`https://api.99envios.app/api/reporte-pedidos/Devuelto/${userData.id}`);
+      const response = await axios.get(`https://api.99envios.app/api/reporte-pedidos/Entregado/${userData.id}`);
       const data = response.data;
       const mappedPedidos = data.map((pedido) => ({
         id_pedido: pedido.ID_pedido,
@@ -125,6 +125,7 @@ const EntregaFallida = ({ navigation }) => {
         costo_envio: `$${parseFloat(pedido.costo_envio).toFixed(2)}`,
         fecha_pedido: pedido.fecha_pedido,
         estado_pedido: pedido.estado_pedido,
+        costo_envio_numero: parseFloat(pedido.costo_envio || 0), // Añadir valor numérico para cálculos
       }));
       setPedidos(mappedPedidos);
       setFilteredPedidos(mappedPedidos);
@@ -147,7 +148,7 @@ const EntregaFallida = ({ navigation }) => {
   return (
     <Layout style={[styles.container, { paddingTop: insets.top }]}>
       <TopNavigation
-        title="Entrega Fallida"
+        title="Entregado"
         alignment="center"
         accessoryLeft={() => renderBackAction(navigation)}
       />
@@ -209,6 +210,28 @@ const EntregaFallida = ({ navigation }) => {
             </View>
           </View>
         </Card>
+
+        {/* Summary cards */}
+        <View style={styles.summaryContainer}>
+          <Card style={styles.summaryCard}>
+            <Text category="h6" style={styles.summaryTitle}>Pedidos</Text>
+            <Text category="h5" style={styles.summaryValue}>{filteredPedidos.length}</Text>
+          </Card>
+          
+          <Card style={styles.summaryCard}>
+            <Text category="h6" style={styles.summaryTitle}>Comisión</Text>
+            <Text category="h5" style={styles.summaryValue}>
+              {filteredPedidos.reduce((acc, pedido) => 
+                acc + (pedido.costo_envio_numero || 0), 0)
+                .toLocaleString('es-CO', { 
+                  style: 'currency', 
+                  currency: 'COP', 
+                  minimumFractionDigits: 0, 
+                  maximumFractionDigits: 0 
+                })}
+            </Text>
+          </Card>
+        </View>
 
         {/* Results heading */}
         {filteredPedidos.length > 0 && (
@@ -352,6 +375,33 @@ const styles = StyleSheet.create({
     color: '#555',
     padding: 16,
   },
+  summaryContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  summaryCard: {
+    flex: 1,
+    margin: 5,
+    padding: 10,
+    borderRadius: 8,
+    backgroundColor: '#F9F9F9',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+  },
+  summaryTitle: {
+    color: '#7380EC',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  summaryValue: {
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#333',
+  },
 });
 
-export default EntregaFallida;
+export default Entregado;

@@ -213,6 +213,7 @@ export const TableroConductorScreen = ({ navigation }) => {
             value={totals.entregados}
             iconName="checkmark-circle-2-outline"
             status="#00E096"
+            onPress={() => navigation.navigate('Entregado')}
           />
           <StatCard
             title="No Asignados"
