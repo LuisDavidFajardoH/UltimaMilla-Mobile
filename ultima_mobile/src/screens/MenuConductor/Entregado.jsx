@@ -170,7 +170,7 @@ const Entregado = ({ navigation }) => {
           </Text>
           <Layout style={styles.underline} />
           <Text category="p2" style={styles.description}>
-            Seleccione un rango de fechas para filtrar los pedidos fallidos.
+            Seleccione un rango de fechas para filtrar los pedidos entregados.
           </Text>
           
           <View style={styles.datePickersContainer}>
