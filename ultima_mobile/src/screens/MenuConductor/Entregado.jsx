@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, ActivityIndicator, Button as RNButton, Platform, ScrollView, RefreshControl } from 'react-native';
-import { Layout, Text, Card, Icon, TopNavigation, TopNavigationAction } from '@ui-kitten/components';
+import { Layout, Text, Card, Icon, TopNavigation, TopNavigationAction, Button } from '@ui-kitten/components';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
@@ -274,11 +274,18 @@ const Entregado = ({ navigation }) => {
               <View style={styles.statusCircle} />
               <Text style={styles.text}>{pedido.estado_pedido}</Text>
             </View>
-            <RNButton
-              title="Ver detalles"
-              color="#7380EC"
-              onPress={() => console.log(`Detalles del pedido ${pedido.id_pedido}`)}
-            />
+            <Button 
+              style={styles.button} 
+              size="small"
+              onPress={() => navigation.navigate('DetallesPedido', { 
+                pedido: { 
+                  id_pedido: pedido.id_pedido 
+                },
+                fromScreen: 'Entregado'
+              })}
+            >
+              Ver detalles
+            </Button>
           </Card>
         ))}
         
@@ -292,6 +299,8 @@ const Entregado = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   scrollView: {
     flex: 1,

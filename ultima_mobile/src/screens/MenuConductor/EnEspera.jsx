@@ -111,7 +111,15 @@ const EnEspera = ({ navigation }) => {
               <View style={styles.statusCircle} />
               <Text style={styles.text}>{pedido.estado_pedido}</Text>
             </View>
-            <Button style={styles.button} size="small">
+            <Button 
+              style={styles.button} 
+              size="small"
+              onPress={() => navigation.navigate('DetallesPedido', { 
+                pedido: { 
+                  id_pedido: pedido.id_pedido 
+                } 
+              })}
+            >
               Ver detalles
             </Button>
           </Card>
@@ -124,6 +132,8 @@ const EnEspera = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   card: {
     padding: 16,

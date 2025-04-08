@@ -147,6 +147,11 @@ const NoAsignado = ({ navigation }) => {
               <Button 
                 style={[styles.button, { marginRight: 8 }]} 
                 size="small"
+                onPress={() => navigation.navigate('DetallesPedido', { 
+                  pedido: { 
+                    id_pedido: pedido.id_pedido 
+                  } 
+                })}
               >
                 Ver detalles
               </Button>
@@ -169,6 +174,8 @@ const NoAsignado = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   card: {
     padding: 16,
