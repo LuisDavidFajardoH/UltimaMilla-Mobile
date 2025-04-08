@@ -70,8 +70,10 @@ const DetallesPedido = ({ route, navigation }) => {
 
   if (loading || !pedido) {
     return (
-      <Layout style={styles.container}>
-        <ActivityIndicator size="large" color="#7380EC" />
+      <Layout style={[styles.container, { paddingTop: insets.top }]}>
+        <Layout style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#7380EC" />
+        </Layout>
       </Layout>
     );
   }
@@ -337,6 +339,11 @@ const styles = StyleSheet.create({
   entregarButton: {
     backgroundColor: '#41c675',
     borderColor: '#41c675',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

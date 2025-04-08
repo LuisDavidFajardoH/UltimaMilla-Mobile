@@ -77,8 +77,10 @@ const NoAsignado = ({ navigation }) => {
 
   if (loading) {
     return (
-      <Layout style={styles.container}>
-        <ActivityIndicator size="large" color="#7380EC" />
+      <Layout style={[styles.container, { paddingTop: insets.top }]}>
+        <Layout style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color="#7380EC" />
+        </Layout>
       </Layout>
     );
   }
@@ -243,6 +245,11 @@ const styles = StyleSheet.create({
   },
   scrollBottomPadding: {
     height: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 
