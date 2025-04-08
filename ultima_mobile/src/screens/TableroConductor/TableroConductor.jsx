@@ -219,6 +219,7 @@ export const TableroConductorScreen = ({ navigation }) => {
             title="No Asignados"
             iconName="person-remove-outline"
             status="#8F9BB3"
+            onPress={() => navigation.navigate('NoAsignado')}
           />
         </Layout>
       </ScrollView>

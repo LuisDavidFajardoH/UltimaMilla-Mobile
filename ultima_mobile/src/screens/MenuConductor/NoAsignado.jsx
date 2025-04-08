@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, ActivityIndicator, ScrollView, RefreshControl } from 'react-native';
+import { StyleSheet, View, ActivityIndicator, ScrollView, RefreshControl, Alert } from 'react-native';
 import { Layout, Text, Card, Button, Icon, TopNavigation, TopNavigationAction } from '@ui-kitten/components';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,29 +14,53 @@ const renderBackAction = (navigation) => (
   <TopNavigationAction icon={BackIcon} onPress={() => navigation.goBack()} />
 );
 
-const EnEspera = ({ navigation }) => {
+const NoAsignado = ({ navigation }) => {
   const insets = useSafeAreaInsets(); // Get safe area insets
   const [pedidos, setPedidos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  
+
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     // Simulate data fetching
     setTimeout(() => setRefreshing(false), 1000);
   }, []);
 
+  const handleEnEspera = async (orderId) => {
+    try {
+      const userData = await authService.getUserData();
+      const url = `https://api.99envios.app/api/pedidos/actualizar-sin-asignar/${userData.id}/${orderId}`;
+      
+      const response = await axios.post(url);
+      if (response.status === 200) {
+        // Remove the order from the local state
+        setPedidos(pedidos.filter(p => p.id_pedido !== orderId));
+        Alert.alert('Éxito', 'Pedido marcado como en espera');
+        // Optionally navigate back or refresh the screen
+        navigation.navigate('MenuConductor', { refresh: true });
+      } else {
+        throw new Error('Error al actualizar el estado del pedido');
+      }
+    } catch (error) {
+      console.error('Error al marcar el pedido como en espera:', error);
+      Alert.alert('Error', 'No se pudo marcar el pedido como en espera');
+    }
+  };
+
   useEffect(() => {
     const fetchPedidos = async () => {
       try {
-        const userData = await authService.getUserData();
-        const response = await axios.get(`https://api.99envios.app/api/reporte-pedidos-espera/${userData.id}`);
-        const data = response.data; // Use response.data instead of response.json()
-        // Map API response to expected structure
+        const response = await axios.get(`https://api.99envios.app/api/pedidos-no-asignados`);
+        const data = response.data;
         const mappedPedidos = data.map((pedido) => ({
           id_pedido: pedido.ID_pedido,
-          nombre_cliente: pedido.nombre_cliente,
+          direccion_entrega: pedido.direccion_entrega,
+          direccion_recogida: pedido.direccion_recogida,
           costo_envio: `$${parseFloat(pedido.costo_envio).toFixed(2)}`,
+          pais: pedido.pais,
+          ciudad: pedido.ciudad,
+          hora_inicio: new Date(pedido.hora_inicio).toLocaleTimeString(),
+          hora_fin: new Date(pedido.hora_fin).toLocaleTimeString(),
           fecha_pedido: pedido.fecha_pedido,
           estado_pedido: pedido.estado_pedido,
         }));
@@ -62,7 +86,7 @@ const EnEspera = ({ navigation }) => {
   return (
     <Layout style={[styles.container, { paddingTop: insets.top }]}>
       <TopNavigation
-        title="Pedidos en Espera"
+        title="Pedidos no Asignados"
         alignment="center"
         accessoryLeft={() => renderBackAction(navigation)} // Add back button
       />
@@ -78,11 +102,11 @@ const EnEspera = ({ navigation }) => {
       >
         <Card style={styles.card}>
           <Text category="h6" style={styles.title}>
-            Pedidos pendientes de entrega
+            Pedidos no Asignados
           </Text>
           <Layout style={styles.underline} /> {/* Reduced width underline */}
           <Text category="p2" style={styles.description}>
-            Seleccione un pedido para ver más detalles o comenzar la entrega.
+            Elija pedidos y haga clic en el botón "En espera", para marcar los pedidos como listos para entregar y salir a entregarlos
           </Text>
         </Card>
 
@@ -96,26 +120,47 @@ const EnEspera = ({ navigation }) => {
               </Text>
             </View>
             <View style={styles.row}>
-              <FontAwesome5 name="user" size={16} color="black" />
-              <Text style={styles.text}>{pedido.nombre_cliente}</Text>
+              <FontAwesome5 name="map-marker-alt" size={16} color="black" />
+              <Text style={styles.text}>Entrega: {pedido.direccion_entrega}</Text>
+            </View>
+            <View style={styles.row}>
+              <FontAwesome5 name="warehouse" size={16} color="black" />
+              <Text style={styles.text}>Recogida: {pedido.direccion_recogida}</Text>
             </View>
             <View style={styles.row}>
               <FontAwesome5 name="money-bill-wave" size={16} color="black" />
               <Text style={styles.text}>{pedido.costo_envio}</Text>
             </View>
             <View style={styles.row}>
-              <FontAwesome5 name="calendar-alt" size={16} color="black" />
-              <Text style={styles.text}>{pedido.fecha_pedido}</Text>
+              <FontAwesome5 name="globe-americas" size={16} color="black" />
+              <Text style={styles.text}>{pedido.ciudad}, {pedido.pais}</Text>
+            </View>
+            <View style={styles.row}>
+              <FontAwesome5 name="clock" size={16} color="black" />
+              <Text style={styles.text}>De {pedido.hora_inicio} a {pedido.hora_fin}</Text>
             </View>
             <View style={styles.row}>
               <View style={styles.statusCircle} />
               <Text style={styles.text}>{pedido.estado_pedido}</Text>
             </View>
-            <Button style={styles.button} size="small">
-              Ver detalles
-            </Button>
+            <View style={styles.buttonContainer}>
+              <Button 
+                style={[styles.button, { marginRight: 8 }]} 
+                size="small"
+              >
+                Ver detalles
+              </Button>
+              <Button 
+                style={[styles.button, { backgroundColor: '#41c675', borderColor: '#41c675' }]} 
+                size="small"
+                onPress={() => handleEnEspera(pedido.id_pedido)}
+              >
+                En espera
+              </Button>
+            </View>
           </Card>
         ))}
+        <View style={styles.scrollBottomPadding} />
       </ScrollView>
     </Layout>
   );
@@ -174,8 +219,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#7380EC',
     marginRight: 8,
   },
-  button: {
+  buttonContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     marginTop: 16,
+  },
+  button: {
+    flex: 1,
     backgroundColor: '#7380EC',
     borderColor: '#7380EC',
   },
@@ -189,4 +239,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default EnEspera;
+export default NoAsignado;
