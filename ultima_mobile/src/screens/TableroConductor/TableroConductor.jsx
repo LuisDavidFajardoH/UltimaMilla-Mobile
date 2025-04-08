@@ -200,6 +200,7 @@ export const TableroConductorScreen = ({ navigation }) => {
             value={totals.porEntregar}
             iconName="car-outline"
             status="#0095FF"
+            onPress={() => navigation.navigate('PorEntregar')}
           />
           <StatCard
             title="Entregas Fallidas"

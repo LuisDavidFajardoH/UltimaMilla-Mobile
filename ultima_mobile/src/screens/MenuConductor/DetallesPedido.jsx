@@ -203,8 +203,43 @@ const DetallesPedido = ({ route, navigation }) => {
           </View>
         </Card>
 
+        {/* Financial details card - Only show when coming from PorEntregar */}
+        {fromScreen === 'PorEntregar' && (
+          <Card style={styles.card}>
+            <View style={styles.header}>
+              <FontAwesome5 name="money-check-alt" size={20} color="#7380EC" />
+              <Text category="h6" style={styles.cardTitle}>Detalles Financieros</Text>
+            </View>
+            <View style={styles.row}>
+              <FontAwesome5 name="shipping-fast" size={16} color="#555" />
+              <Text style={styles.financeLabel}>Costo envío:</Text>
+              <Text style={styles.financeValue}>+{parseFloat(pedido.costo_envio).toFixed(2)}</Text>
+            </View>
+            <View style={styles.row}>
+              <FontAwesome5 name="box" size={16} color="#555" />
+              <Text style={styles.financeLabel}>Valor producto:</Text>
+              <Text style={styles.financeValue}>+{parseFloat(pedido.valor_producto).toFixed(2)}</Text>
+            </View>
+            <View style={styles.row}>
+              <FontAwesome5 name="percentage" size={16} color="#555" />
+              <Text style={styles.financeLabel}>Fee:</Text>
+              <Text style={styles.financeValue}>+{parseFloat(pedido.FEE99).toFixed(2)}</Text>
+            </View>
+            <View style={styles.divider} />
+            <View style={styles.row}>
+              <FontAwesome5 name="money-bill-wave" size={16} color="#41c675" />
+              <Text style={[styles.financeLabel, { color: '#41c675' }]}>Total Neto:</Text>
+              <Text style={styles.totalValue}>$ {(
+                parseFloat(pedido.costo_envio) + 
+                parseFloat(pedido.valor_producto) + 
+                parseFloat(pedido.FEE99)
+              ).toFixed(2)}</Text>
+            </View>
+          </Card>
+        )}
+
         {/* Only show action buttons if not coming from Entregado or EntregaFallida */}
-        {!fromScreen && (
+        {(!fromScreen || fromScreen === 'PorEntregar') && (
           <View style={styles.actionButtonsContainer}>
             <Button
               size="medium"
@@ -344,6 +379,25 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  financeLabel: {
+    marginLeft: 8,
+    color: '#555',
+    flex: 1,
+  },
+  financeValue: {
+    color: '#555',
+    textAlign: 'right',
+  },
+  totalValue: {
+    color: '#41c675',
+    textAlign: 'right',
+    fontWeight: 'bold',
+  },
+  divider: {
+    height: 1,
+    backgroundColor: '#E4E4E4',
+    marginVertical: 8,
   },
 });
 
