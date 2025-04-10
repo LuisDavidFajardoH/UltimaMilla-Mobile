@@ -11,6 +11,7 @@ import { TableroSucursalScreen } from '../screens/TableroSucursal/TableroSucursa
 import { TableroConductorScreen } from '../screens/TableroConductor/TableroConductor';
 import ReportesScreen from '../screens/Reportes/ReportesScreen'; // Update import to use default import
 import InventarioScreen from '../screens/Inventario/InventarioScreen';  // Add this import
+import PedidoIndividualScreen from '../screens/sucursal/PedidoIndividualScreen'; // Add this import
 
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
@@ -77,7 +78,7 @@ function DrawerNavigator() {
       />
       <Drawer.Screen 
         name="PedidoIndividualSucursal" 
-        component={TableroSucursalScreen}
+        component={PedidoIndividualScreen} // Update this line
         options={{
           title: 'Pedido Individual',
           drawerIcon: (props) => renderIcon(props)('pin-outline')

@@ -7,6 +7,12 @@ const cardWidth = (width - 48) / 2;
 
 export const ProductCard = ({ producto }) => {
   const mainImage = producto.imagenes?.[0]?.url_imagen || null;
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('es-CO', {
+      style: 'currency',
+      currency: 'COP'
+    }).format(parseFloat(price));
+  };
 
   return (
     <Card style={styles.card}>
@@ -26,15 +32,18 @@ export const ProductCard = ({ producto }) => {
         </Text>
         <Layout style={styles.priceContainer}>
           <Text category='h6' style={styles.precio}>
-            ${Number(producto.precio_sugerido).toLocaleString()}
+            {formatPrice(producto.precio_sugerido)}
           </Text>
-          <Text category='c1' style={styles.stock}>
+          <Text category='c1' style={[styles.stock, 
+            producto.cantidad_disponible <= 0 ? styles.stockEmpty : null]}>
             Stock: {producto.cantidad_disponible}
           </Text>
         </Layout>
-        <Text category='c1' style={styles.categoria}>
-          {producto.categoria?.nombre_categoria}
-        </Text>
+        {producto.descripcion_producto && (
+          <Text category='c1' style={styles.descripcion} numberOfLines={2}>
+            {producto.descripcion_producto}
+          </Text>
+        )}
       </Layout>
     </Card>
   );
@@ -82,5 +91,13 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
     alignSelf: 'flex-start',
+  },
+  stockEmpty: {
+    color: '#FF3D71',
+  },
+  descripcion: {
+    color: '#8F9BB3',
+    fontSize: 12,
+    marginTop: 4,
   },
 });
