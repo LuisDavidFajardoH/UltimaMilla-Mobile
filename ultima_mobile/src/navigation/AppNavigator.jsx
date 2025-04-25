@@ -75,7 +75,7 @@ function DrawerNavigator() {
       />
       <Drawer.Screen 
         name="InventarioSucursal" 
-        component={TableroSucursalScreen}
+        component={InventarioScreen}  // Change this line
         options={{
           title: 'Inventario',
           drawerIcon: (props) => renderIcon(props)('archive-outline')
@@ -83,7 +83,7 @@ function DrawerNavigator() {
       />
       <Drawer.Screen 
         name="PedidoIndividualSucursal" 
-        component={TableroSucursalScreen}
+        component={PedidoIndividualScreen} // Update this line
         options={{
           title: 'Pedido Individual',
           drawerIcon: (props) => renderIcon(props)('pin-outline')
