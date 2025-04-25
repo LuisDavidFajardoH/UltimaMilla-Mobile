@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { StyleSheet, View, ActivityIndicator, ScrollView, RefreshControl, Linking } from 'react-native';
-import { Layout, Text, Card, Button, Icon, TopNavigation, TopNavigationAction } from '@ui-kitten/components';
+import { StyleSheet, View, ActivityIndicator, ScrollView, RefreshControl, Linking, Alert, KeyboardAvoidingView, Platform } from 'react-native';
+import { Layout, Text, Card, Button, Icon, TopNavigation, TopNavigationAction, Modal, Input } from '@ui-kitten/components';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
@@ -28,6 +28,8 @@ const DetallesPedido = ({ route, navigation }) => {
   const [pedido, setPedido] = useState(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [novedadesModalVisible, setNovedadesModalVisible] = useState(false);
+  const [novedadText, setNovedadText] = useState('');
   
   // Extract parameters from route
   const id_pedido = route.params?.pedido?.id_pedido;
@@ -60,6 +62,10 @@ const DetallesPedido = ({ route, navigation }) => {
 
   const openWhatsApp = (phoneNumber) => {
     let number = phoneNumber.replace(/\D/g, ''); // Remove non-digits
+    // Add Colombian country code +57 if not present
+    if (!number.startsWith('57')) {
+      number = '57' + number;
+    }
     Linking.openURL(`whatsapp://send?phone=${number}`);
   };
 
@@ -67,6 +73,87 @@ const DetallesPedido = ({ route, navigation }) => {
     const encodedAddress = encodeURIComponent(address);
     Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodedAddress}`);
   };
+
+  const handleOpenNovedadesModal = () => {
+    setNovedadesModalVisible(true);
+  };
+
+  const handleCloseNovedadesModal = () => {
+    setNovedadesModalVisible(false);
+    setNovedadText('');
+  };
+
+  const handleEnviarNovedad = () => {
+    console.log('Enviando novedad:', novedadText);
+    handleCloseNovedadesModal();
+  };
+
+  /**
+   * Desasigna el pedido del repartidor actual.
+   */
+  const handleDesasignarPedido = useCallback(() => {
+    Alert.alert(
+      'Confirmar desasignación',
+      '¿Estás seguro de que quieres desasignar este pedido?',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Desasignar',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              const response = await axios.post(`https://api.99envios.app/api/pedidos/actualizar-a-null/${id_pedido}`);
+              if (response.status === 200) {
+                Alert.alert('Éxito', 'Pedido desasignado correctamente');
+                navigation.navigate('EnEspera', { refresh: true });
+              } else {
+                throw new Error('No se pudo desasignar el pedido');
+              }
+            } catch (error) {
+              console.error('Error al desasignar el pedido:', error);
+              Alert.alert('Error', 'No se pudo desasignar el pedido');
+            }
+          }
+        }
+      ]
+    );
+  }, [id_pedido, navigation]);
+
+  /**
+   * Cambia el estado del pedido a "En proceso" (salir a entregar).
+   */
+  const handleSalirEntregar = useCallback(() => {
+    Alert.alert(
+      'Confirmar cambio de estado',
+      'Esta acción cambiará el estado del pedido a "En proceso" y no puede deshacerse.',
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel'
+        },
+        {
+          text: 'Confirmar',
+          onPress: async () => {
+            try {
+              const response = await axios.post(`https://api.99envios.app/api/pedidos/en-proceso/${id_pedido}`);
+              if (response.status === 200) {
+                Alert.alert('Éxito', 'Pedido actualizado correctamente');
+                navigation.navigate('PorEntregar', { refresh: true });
+              } else {
+                throw new Error('No se pudo actualizar el estado del pedido');
+              }
+            } catch (error) {
+              console.error('Error al actualizar el estado del pedido:', error);
+              Alert.alert('Error', 'No se pudo actualizar el estado del pedido');
+            }
+          }
+        }
+      ]
+    );
+  }, [id_pedido, navigation]);
 
   if (loading || !pedido) {
     return (
@@ -85,6 +172,46 @@ const DetallesPedido = ({ route, navigation }) => {
         alignment="center"
         accessoryLeft={() => renderBackAction(navigation)}
       />
+
+      {/* Novedades Modal */}
+      <Modal
+        visible={novedadesModalVisible}
+        backdropStyle={styles.backdrop}
+        onBackdropPress={handleCloseNovedadesModal}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.keyboardAvoidingView}
+        >
+          <Card disabled style={styles.modalCard}>
+            <View style={styles.modalHeader}>
+              <Text category="h6" style={styles.modalTitle}>Novedades</Text>
+              <Button
+                appearance="ghost"
+                size="small"
+                style={styles.closeButton}
+                onPress={handleCloseNovedadesModal}
+                accessoryLeft={(props) => <FontAwesome5 name="times" size={16} color="#7380EC" />}
+              />
+            </View>
+            <Input
+              placeholder="Escribe una novedad"
+              value={novedadText}
+              onChangeText={setNovedadText}
+              style={styles.novedadInput}
+              multiline={true}
+              textStyle={{ minHeight: 64 }}
+            />
+            <Button
+              style={styles.enviarNovedadButton}
+              onPress={handleEnviarNovedad}
+            >
+              Enviar novedad
+            </Button>
+          </Card>
+        </KeyboardAvoidingView>
+      </Modal>
+
       <ScrollView
         style={styles.scrollView}
         refreshControl={
@@ -245,6 +372,7 @@ const DetallesPedido = ({ route, navigation }) => {
               size="medium"
               style={[styles.actionButton, styles.entregarButton]}
               accessoryLeft={(props) => <FontAwesome5 name="truck" size={16} color="white" />}
+              onPress={handleSalirEntregar}
             >
               Salir a entregar
             </Button>
@@ -252,6 +380,7 @@ const DetallesPedido = ({ route, navigation }) => {
               size="medium"
               style={[styles.actionButton, styles.novedadesButton]}
               accessoryLeft={(props) => <FontAwesome5 name="exclamation-circle" size={16} color="white" />}
+              onPress={handleOpenNovedadesModal}
             >
               Novedades
             </Button>
@@ -259,6 +388,7 @@ const DetallesPedido = ({ route, navigation }) => {
               size="medium"
               style={[styles.actionButton, styles.desasignarButton]}
               accessoryLeft={(props) => <FontAwesome5 name="times-circle" size={16} color="white" />}
+              onPress={handleDesasignarPedido}
             >
               Desasignar
             </Button>
@@ -398,6 +528,44 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#E4E4E4',
     marginVertical: 8,
+  },
+  backdrop: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  keyboardAvoidingView: {
+    flex: 0,
+    width: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalCard: {
+    borderRadius: 8,
+    padding: 10,
+    width: 300,
+    maxWidth: '100%',
+    position: 'relative',
+  },
+  modalHeader: {
+    position: 'relative',
+    alignItems: 'center',
+    marginBottom: 10,
+    width: '100%',
+  },
+  modalTitle: {
+    textAlign: 'center',
+    marginBottom: 16,
+    color: '#7380EC',
+  },
+  closeButton: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    padding: 0,
+    margin: 0,
+    zIndex: 1,
   },
 });
 
