@@ -18,6 +18,9 @@ import NoAsignado from '../screens/MenuConductor/NoAsignado';
 import DetallesPedido from '../screens/MenuConductor/DetallesPedido';
 import PorEntregar from '../screens/MenuConductor/PorEntregar';
 
+import InventarioScreen from '../screens/Inventario/InventarioScreen';  // Add this import
+import PedidoIndividualScreen from '../screens/sucursal/PedidoIndividualScreen'; // Add this import
+
 const Stack = createStackNavigator();
 const Drawer = createDrawerNavigator();
 
