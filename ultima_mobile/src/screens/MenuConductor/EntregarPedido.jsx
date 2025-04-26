@@ -4,7 +4,6 @@ import { Layout, Text, Card, Button, Icon, TopNavigation, TopNavigationAction, M
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
-import { authService } from '../../services/authService';
 
 const BackIcon = (props) => (
   <Icon {...props} name="arrow-back" />
