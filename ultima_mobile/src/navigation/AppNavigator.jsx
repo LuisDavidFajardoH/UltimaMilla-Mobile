@@ -17,6 +17,9 @@ import Entregado from '../screens/MenuConductor/Entregado';
 import NoAsignado from '../screens/MenuConductor/NoAsignado';
 import DetallesPedido from '../screens/MenuConductor/DetallesPedido';
 import PorEntregar from '../screens/MenuConductor/PorEntregar';
+import EntregarPedido from '../screens/MenuConductor/EntregarPedido';
+import ProcesoPago from '../screens/MenuConductor/ProcesoPago';
+import PagoEfectivo from '../screens/MenuConductor/PagoEfectivo';
 
 import InventarioScreen from '../screens/Inventario/InventarioScreen';  // Add this import
 import PedidoIndividualScreen from '../screens/sucursal/PedidoIndividualScreen'; // Add this import
@@ -126,6 +129,10 @@ function AppNavigator() {
         <Stack.Screen name="NoAsignado" component={NoAsignado} />
         <Stack.Screen name="DetallesPedido" component={DetallesPedido} />
         <Stack.Screen name="PorEntregar" component={PorEntregar} />
+        <Stack.Screen name="EntregarPedido" component={EntregarPedido} />
+        <Stack.Screen name="ProcesoPago" component={ProcesoPago} />
+        <Stack.Screen name="PagoEfectivo" component={PagoEfectivo} />
+
       </Stack.Navigator>
     </NavigationContainer>
   );

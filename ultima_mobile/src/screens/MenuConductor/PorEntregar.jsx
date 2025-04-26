@@ -114,11 +114,10 @@ const PorEntregar = ({ navigation }) => {
             <Button 
               style={styles.button} 
               size="small"
-              onPress={() => navigation.navigate('DetallesPedido', { 
+              onPress={() => navigation.navigate('EntregarPedido', { 
                 pedido: { 
                   id_pedido: pedido.id_pedido 
                 },
-                fromScreen: 'PorEntregar'
               })}
             >
               Ver detalles
