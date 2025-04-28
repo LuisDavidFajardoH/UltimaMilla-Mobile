@@ -20,6 +20,10 @@ import PorEntregar from '../screens/MenuConductor/PorEntregar';
 import EntregarPedido from '../screens/MenuConductor/EntregarPedido';
 import ProcesoPago from '../screens/MenuConductor/ProcesoPago';
 import PagoEfectivo from '../screens/MenuConductor/PagoEfectivo';
+import PagoDigital from '../screens/MenuConductor/PagoDigital';
+import PagoMixto from '../screens/MenuConductor/PagoMixto';
+import EntregaConfirmada from '../screens/MenuConductor/EntregaConfirmada';
+import EntregaCancelada from '../screens/MenuConductor/EntregaCancelada';
 
 import InventarioScreen from '../screens/Inventario/InventarioScreen';  // Add this import
 import PedidoIndividualScreen from '../screens/sucursal/PedidoIndividualScreen'; // Add this import
@@ -132,6 +136,10 @@ function AppNavigator() {
         <Stack.Screen name="EntregarPedido" component={EntregarPedido} />
         <Stack.Screen name="ProcesoPago" component={ProcesoPago} />
         <Stack.Screen name="PagoEfectivo" component={PagoEfectivo} />
+        <Stack.Screen name="PagoDigital" component={PagoDigital} />
+        <Stack.Screen name="PagoMixto" component={PagoMixto} />
+        <Stack.Screen name="EntregaConfirmada" component={EntregaConfirmada} />
+        <Stack.Screen name="EntregaCancelada" component={EntregaCancelada} />
 
       </Stack.Navigator>
     </NavigationContainer>
