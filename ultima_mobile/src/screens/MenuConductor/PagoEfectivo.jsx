@@ -4,7 +4,7 @@ import { Layout, Text, Icon, TopNavigation, TopNavigationAction, Button, Card, D
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { FontAwesome5 } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 
 const BackIcon = (props) => <Icon {...props} name="arrow-back" />;
 const CashIcon = (props) => <Icon {...props} name="credit-card-outline" />;
@@ -99,9 +99,7 @@ function PagoEfectivo({ navigation, route }) {
             const url = `https://api.99envios.app/api/pago_efectivo`;
             console.log('Sending payment proof:', url, formData);
             const response = await axios.post(url, formData, {
-                headers: {
-                    'Content-Type': 'multipart/form-data',
-                },
+                headers: { 'Content-Type': 'multipart/form-data' },
             });
             console.log('Send payment proof response:', response.data);
             if (response.status === 200) {
@@ -143,7 +141,6 @@ function PagoEfectivo({ navigation, route }) {
                 const deliveredSuccess = await markAsDelivered();
 
                 if (deliveredSuccess) {
-                    Alert.alert('Éxito', 'Comprobante enviado y entrega confirmada.');
                     navigation.navigate('EntregaConfirmada', { id });
                 } else {
                     // This case might need specific handling depending on business logic
@@ -167,22 +164,29 @@ function PagoEfectivo({ navigation, route }) {
      * @async
      */
     const handleFilePick = async () => {
-        try {
-            const result = await DocumentPicker.getDocumentAsync({
-                type: '*/*',
-                copyToCacheDirectory: true,
+        // Pedir permiso para galería
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permiso denegado', 'Se necesita permiso para acceder a las imágenes.');
+            return;
+        }
+        // Abrir selector de imágenes (sin recorte)
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+        });
+        if (!result.canceled && result.assets?.length) {
+            const asset = result.assets[0];
+            const uri = asset.uri;
+            const name = asset.fileName || uri.split('/').pop();
+            const ext = name.split('.').pop() || 'jpg';
+            setSelectedFile({
+                uri,
+                name,
+                mimeType: `image/${ext}`,
             });
-
-            console.log('Document Picker Result:', result);
-
-            if (!result.canceled && result.assets && result.assets.length > 0) {
-                setSelectedFile(result.assets[0]);
-            } else {
-                setSelectedFile(null);
-                console.log('File selection cancelled or failed.');
-            }
-        } catch (error) {
-            console.error('Error picking document:', error);
+        } else {
+            console.log('Selección de imagen cancelada');
             setSelectedFile(null);
         }
     };
@@ -262,7 +266,7 @@ function PagoEfectivo({ navigation, route }) {
                         onPress={handleFilePick}
                         disabled={isLoading}
                     >
-                        Seleccionar archivo
+                        Seleccionar imagen
                     </Button>
                     {selectedFile && (
                         <Text style={styles.fileNameText} numberOfLines={1} ellipsizeMode="middle">

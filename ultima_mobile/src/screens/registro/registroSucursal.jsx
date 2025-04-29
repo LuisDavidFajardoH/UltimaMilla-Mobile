@@ -394,7 +394,7 @@ export const RegisterBusinessScreen = ({ navigation }) => {
 
       // Navegar después de que el usuario cierre el alert
       setTimeout(() => {
-        navigation.replace('99 Envios');
+        navigation.replace('Login');
       }, 1500);
 
     } catch (error) {

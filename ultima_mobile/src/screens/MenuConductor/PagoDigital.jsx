@@ -1,12 +1,13 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Alert } from 'react-native';
 import { Layout, Text, Icon, TopNavigation, TopNavigationAction, Button, Card, Divider } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { FontAwesome5 } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker'; // Import DocumentPicker
+import * as ImagePicker from 'expo-image-picker';
 
 const BackIcon = (props) => <Icon {...props} name="arrow-back" />;
+const CashIcon = (props) => <Icon {...props} name="credit-card-outline" />;
 const ConfirmIcon = (props) => <Icon {...props} name="checkmark-circle-2-outline" />;
 
 const renderBackAction = (navigation) => (
@@ -20,7 +21,8 @@ const renderBackAction = (navigation) => (
 function PagoDigital({ navigation, route }) {
     const insets = useSafeAreaInsets();
     const [orderInfo, setOrderInfo] = useState(null);
-    const [selectedFile, setSelectedFile] = useState(null); // State for selected file
+    const [selectedFile, setSelectedFile] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
     const id = route.params?.id;
 
     /**
@@ -53,36 +55,147 @@ function PagoDigital({ navigation, route }) {
         : null;
 
     /**
+     * Marca el pedido como entregado en la API.
+     * @async
+     */
+    const markAsDelivered = async () => {
+        try {
+            const url = `https://api.99envios.app/api/pedidos/actualizar-a-entregado/${id}`;
+            console.log('Marking as delivered:', url);
+            const response = await axios.post(url);
+            console.log('Mark as delivered response:', response.data);
+            if (response.status === 200) {
+                console.log('Pedido marcado como entregado correctamente');
+                return true;
+            } else {
+                console.error('Error marking as delivered, status:', response.status);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error updating order to delivered:', error);
+            Alert.alert('Error', 'No se pudo marcar el pedido como entregado.');
+            return false;
+        }
+    };
+
+    /**
+     * Envía la imagen del comprobante de pago a la API.
+     * @async
+     */
+    const sendPaymentProofImage = async () => {
+        if (!selectedFile || !orderInfo) return false;
+
+        const formData = new FormData();
+        formData.append('foto_comprobante_virtual', {
+            uri: selectedFile.uri,
+            name: selectedFile.name,
+            type: selectedFile.mimeType || 'image/jpeg',
+        });
+        formData.append('ID_pedido', id);
+        formData.append('estado_pago', 'Entregado');
+        formData.append('pago_efectivo', 0);
+        formData.append('pago_digital', orderInfo.valor_producto);
+
+        try {
+            const url = `https://api.99envios.app/api/pago_digital`;
+            console.log('Sending payment proof:', url, formData);
+            const response = await axios.post(url, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            console.log('Send payment proof response:', response.data);
+            if (response.status === 200) {
+                console.log('Imagen de comprobante de pago enviada correctamente');
+                return true;
+            } else {
+                console.error('Error sending payment proof, status:', response.status);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error sending payment proof image:', error.response ? error.response.data : error);
+            Alert.alert('Error', 'No se pudo enviar el comprobante de pago.');
+            return false;
+        }
+    };
+
+    /**
+     * Handles the confirmation of delivery process.
+     * @async
+     */
+    const handleConfirmDelivery = async () => {
+        if (!selectedFile) {
+            Alert.alert('Archivo Requerido', 'Por favor, selecciona una imagen del comprobante antes de confirmar.');
+            return;
+        }
+        if (!orderInfo) {
+            Alert.alert('Error', 'No se pudo cargar la información del pedido.');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // First, try to send the payment proof image
+            const paymentProofSuccess = await sendPaymentProofImage();
+
+            if (paymentProofSuccess) {
+                // If payment proof is sent successfully, then mark the order as delivered
+                const deliveredSuccess = await markAsDelivered();
+
+                if (deliveredSuccess) {
+                    navigation.navigate('EntregaConfirmada', { id });
+                } else {
+                    // This case might need specific handling depending on business logic
+                    // e.g., retry marking as delivered, or inform support
+                    Alert.alert('Error Parcial', 'El comprobante fue enviado, pero falló la marcación como entregado. Por favor, contacta a soporte.');
+                }
+            } else {
+                // If sending payment proof fails, do not proceed to mark as delivered
+                Alert.alert('Error', 'No se pudo enviar el comprobante de pago. La entrega no fue confirmada.');
+            }
+        } catch (error) {
+            console.error('Error during confirmation process:', error);
+            Alert.alert('Error', 'Ocurrió un error inesperado durante la confirmación.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
      * Handles the file selection process.
      * @async
      */
     const handleFilePick = async () => {
-        try {
-            const result = await DocumentPicker.getDocumentAsync({
-                type: '*/*', // Allow any file type, adjust as needed (e.g., 'image/*')
-                copyToCacheDirectory: true,
+        // Pedir permiso para galería
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permiso denegado', 'Se necesita permiso para acceder a las imágenes.');
+            return;
+        }
+        // Abrir selector de imágenes (sin recorte)
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+        });
+        if (!result.canceled && result.assets?.length) {
+            const asset = result.assets[0];
+            const uri = asset.uri;
+            const name = asset.fileName || uri.split('/').pop();
+            const ext = name.split('.').pop() || 'jpg';
+            setSelectedFile({
+                uri,
+                name,
+                mimeType: `image/${ext}`,
             });
-
-            console.log('Document Picker Result:', result);
-
-            if (!result.canceled && result.assets && result.assets.length > 0) {
-                setSelectedFile(result.assets[0]); // Store the first selected asset
-            } else {
-                // Handle cancellation or no asset selected
-                setSelectedFile(null);
-                console.log('File selection cancelled or failed.');
-            }
-        } catch (error) {
-            console.error('Error picking document:', error);
+        } else {
+            console.log('Selección de imagen cancelada');
             setSelectedFile(null);
-            // Optionally show an error message to the user
         }
     };
 
     return (
         <Layout style={[styles.container, { paddingTop: insets.top }]}>
             <TopNavigation
-                title={`Pago del Pedido #${orderInfo?.ID_pedido || id}`}
+                title={`Pago Digital del Pedido #${orderInfo?.ID_pedido || id}`}
                 alignment="center"
                 accessoryLeft={() => renderBackAction(navigation)}
             />
@@ -143,7 +256,7 @@ function PagoDigital({ navigation, route }) {
                 <Card style={styles.information}>
                     <View style={styles.header}>
                         <FontAwesome5 name="file-invoice" size={20} color="#7380EC" />
-                        <Text category="h6" style={styles.cardTitle}>Comprobante pago digital</Text>
+                        <Text category="h6" style={styles.cardTitle}>Comprobante de pago virtual</Text>
                     </View>
                     <Text style={styles.instructionText}>
                         Anexa una captura o fotografía de la transacción virtual
@@ -151,11 +264,11 @@ function PagoDigital({ navigation, route }) {
                     <Button
                         style={[styles.customButton, styles.uploadButton]}
                         accessoryLeft={(props) => <Icon {...props} name="upload-outline" />}
-                        onPress={handleFilePick} // Attach file picker function
+                        onPress={handleFilePick}
+                        disabled={isLoading}
                     >
-                        Seleccionar archivo
+                        Seleccionar imagen
                     </Button>
-                    {/* Display selected file name */}
                     {selectedFile && (
                         <Text style={styles.fileNameText} numberOfLines={1} ellipsizeMode="middle">
                             Archivo: {selectedFile.name}
@@ -164,8 +277,10 @@ function PagoDigital({ navigation, route }) {
                     <Button
                         style={[styles.customButton, styles.cashButton]}
                         accessoryLeft={ConfirmIcon}
+                        onPress={handleConfirmDelivery}
+                        disabled={!selectedFile || isLoading}
                     >
-                        Confirmar Entrega
+                        {isLoading ? 'Confirmando...' : 'Confirmar Entrega'}
                     </Button>
                 </Card>
             </View>

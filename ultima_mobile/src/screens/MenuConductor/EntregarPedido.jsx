@@ -108,8 +108,7 @@ const EntregarPedido = ({ route, navigation }) => {
               const response = await axios.post(`https://api.99envios.app/api/pedidos/actualizar-a-devuelto/${id_pedido}`);
               if (response.status === 200) {
                 fetchPedidoDetails(); // Refrescar detalles del pedido
-                Alert.alert('Éxito', 'Pedido cancelado correctamente');
-                navigation.navigate('EntregaFallida', { refresh: true });
+                navigation.navigate('EntregaCancelada', { refresh: true });
               }
             } catch (error) {
               console.error('Error canceling order:', error);
