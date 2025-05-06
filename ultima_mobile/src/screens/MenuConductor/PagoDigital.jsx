@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback, useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { Layout, Text, Icon, TopNavigation, TopNavigationAction, Button, Card, Divider } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
@@ -86,7 +86,7 @@ function PagoDigital({ navigation, route }) {
         if (!selectedFile || !orderInfo) return false;
 
         const formData = new FormData();
-        formData.append('foto_comprobante_virtual', {
+        formData.append('foto_comprobante_digital', {
             uri: selectedFile.uri,
             name: selectedFile.name,
             type: selectedFile.mimeType || 'image/jpeg',
@@ -199,7 +199,7 @@ function PagoDigital({ navigation, route }) {
                 alignment="center"
                 accessoryLeft={() => renderBackAction(navigation)}
             />
-            <View style={styles.contentContainer}>
+            <ScrollView style={styles.contentContainer} contentContainerStyle={styles.scrollContent}>
                 <Card style={styles.information}>
                     <View style={styles.header}>
                         <FontAwesome5 name="money-check-alt" size={20} color="#7380EC" />
@@ -256,10 +256,10 @@ function PagoDigital({ navigation, route }) {
                 <Card style={styles.information}>
                     <View style={styles.header}>
                         <FontAwesome5 name="file-invoice" size={20} color="#7380EC" />
-                        <Text category="h6" style={styles.cardTitle}>Comprobante de pago virtual</Text>
+                        <Text category="h6" style={styles.cardTitle}>Comprobante de pago digital</Text>
                     </View>
                     <Text style={styles.instructionText}>
-                        Anexa una captura o fotografía de la transacción virtual
+                        Anexa una captura o fotografía de la transacción digital
                     </Text>
                     <Button
                         style={[styles.customButton, styles.uploadButton]}
@@ -283,7 +283,7 @@ function PagoDigital({ navigation, route }) {
                         {isLoading ? 'Confirmando...' : 'Confirmar Entrega'}
                     </Button>
                 </Card>
-            </View>
+            </ScrollView>
         </Layout>
     );
 }
@@ -294,7 +294,11 @@ const styles = StyleSheet.create({
         backgroundColor: '#f9fafb',
     },
     contentContainer: {
+        flex: 1,
+    },
+    scrollContent: {
         padding: 16,
+        paddingBottom: 24,
     },
     information: {
         marginBottom: 20,

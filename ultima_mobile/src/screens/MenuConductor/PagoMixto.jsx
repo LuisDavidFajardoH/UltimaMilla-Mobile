@@ -1,14 +1,13 @@
 import React, { useEffect, useCallback, useState } from 'react';
-// Import ScrollView
-import { View, StyleSheet, ScrollView } from 'react-native';
+import { View, StyleSheet, Alert, ScrollView } from 'react-native';
 import { Layout, Text, Icon, TopNavigation, TopNavigationAction, Button, Card, Divider, Input } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import axios from 'axios';
 import { FontAwesome5 } from '@expo/vector-icons';
-import * as DocumentPicker from 'expo-document-picker'; // Import DocumentPicker
+import * as ImagePicker from 'expo-image-picker';
 
 const BackIcon = (props) => <Icon {...props} name="arrow-back" />;
-// Define ConfirmIcon
+const CashIcon = (props) => <Icon {...props} name="credit-card-outline" />;
 const ConfirmIcon = (props) => <Icon {...props} name="checkmark-circle-2-outline" />;
 
 const renderBackAction = (navigation) => (
@@ -22,31 +21,12 @@ const renderBackAction = (navigation) => (
 function PagoMixto({ navigation, route }) {
     const insets = useSafeAreaInsets();
     const [orderInfo, setOrderInfo] = useState(null);
-    const [selectedFile, setSelectedFile] = useState(null); // State for selected file
-    const [cashAmount, setCashAmount] = useState('');
-    const [digitalAmount, setDigitalAmount] = useState('');
+    const [cashProofImage, setCashProofImage] = useState(null);
+    const [digitalProofImage, setDigitalProofImage] = useState(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [efectivo, setEfectivo] = useState('');
+    const [digital, setDigital] = useState('');
     const id = route.params?.id;
-
-    /**
-     * Navega a la página de pago mixto.
-     */
-    function handleDetailsClickMixto() {
-        navigation.navigate('PagoMixto', { id });
-    }
-
-    /**
-     * Navega a la página de pago en efectivo.
-     */
-    function handleDetailsClickEfectivo() {
-        navigation.navigate('PagoMixto', { id });
-    }
-
-    /**
-     * Navega a la página de pago digital.
-     */
-    function handleDetailsClickDigital() {
-        navigation.navigate('PagoDigital', { id });
-    }
 
     /**
      * Obtiene la información del pedido desde la API.
@@ -78,43 +58,177 @@ function PagoMixto({ navigation, route }) {
         : null;
 
     /**
-     * Handles the file selection process.
+     * Marca el pedido como entregado en la API.
      * @async
      */
-    const handleFilePick = async () => {
+    const markAsDelivered = async () => {
         try {
-            const result = await DocumentPicker.getDocumentAsync({
-                type: '*/*', // Allow any file type, adjust as needed (e.g., 'image/*')
-                copyToCacheDirectory: true,
-            });
-
-            console.log('Document Picker Result:', result);
-
-            if (!result.canceled && result.assets && result.assets.length > 0) {
-                setSelectedFile(result.assets[0]); // Store the first selected asset
+            const url = `https://api.99envios.app/api/pedidos/actualizar-a-entregado/${id}`;
+            console.log('Marking as delivered:', url);
+            const response = await axios.post(url);
+            console.log('Mark as delivered response:', response.data);
+            if (response.status === 200) {
+                console.log('Pedido marcado como entregado correctamente');
+                return true;
             } else {
-                // Handle cancellation or no asset selected
-                setSelectedFile(null);
-                console.log('File selection cancelled or failed.');
+                console.error('Error marking as delivered, status:', response.status);
+                return false;
             }
         } catch (error) {
-            console.error('Error picking document:', error);
-            setSelectedFile(null);
-            // Optionally show an error message to the user
+            console.error('Error updating order to delivered:', error);
+            Alert.alert('Error', 'No se pudo marcar el pedido como entregado.');
+            return false;
+        }
+    };
+
+    /**
+     * Envía las imágenes de comprobantes de pago a la API.
+     * @async
+     */
+    const sendPaymentProofImage = async () => {
+        if ((!cashProofImage && !digitalProofImage) || !orderInfo) return false;
+
+        const formData = new FormData();
+        
+        if (cashProofImage) {
+            formData.append('foto_comprobante_efectivo', {
+                uri: cashProofImage.uri,
+                name: cashProofImage.name,
+                type: cashProofImage.mimeType || 'image/jpeg',
+            });
+        }
+        
+        if (digitalProofImage) {
+            formData.append('foto_comprobante_digital', {
+                uri: digitalProofImage.uri,
+                name: digitalProofImage.name,
+                type: digitalProofImage.mimeType || 'image/jpeg',
+            });
+        }
+        
+        formData.append('ID_pedido', id);
+        formData.append('estado_pago', 'Entregado');
+        formData.append('pago_efectivo', efectivo || '0');
+        formData.append('pago_digital', digital || '0');
+
+        try {
+            const url = `https://api.99envios.app/api/pago_digital`;
+            console.log('Sending payment proof:', url, formData);
+            const response = await axios.post(url, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            console.log('Send payment proof response:', response.data);
+            if (response.status === 200) {
+                console.log('Imágenes de comprobantes enviadas correctamente');
+                return true;
+            } else {
+                console.error('Error sending payment proof, status:', response.status);
+                return false;
+            }
+        } catch (error) {
+            console.error('Error sending payment proof images:', error.response ? error.response.data : error);
+            Alert.alert('Error', 'No se pudieron enviar los comprobantes de pago.');
+            return false;
+        }
+    };
+
+    /**
+     * Handles the confirmation of delivery process.
+     * @async
+     */
+    const handleConfirmDelivery = async () => {
+        if (!cashProofImage && !digitalProofImage) {
+            Alert.alert('Archivo Requerido', 'Por favor, selecciona al menos una imagen de comprobante antes de confirmar.');
+            return;
+        }
+        
+        if (efectivo === '' && digital === '') {
+            Alert.alert('Monto Requerido', 'Por favor, ingresa al menos un monto de pago.');
+            return;
+        }
+        
+        if (!orderInfo) {
+            Alert.alert('Error', 'No se pudo cargar la información del pedido.');
+            return;
+        }
+
+        setIsLoading(true);
+
+        try {
+            // First, try to send the payment proof images
+            const paymentProofSuccess = await sendPaymentProofImage();
+
+            if (paymentProofSuccess) {
+                // If payment proof is sent successfully, then mark the order as delivered
+                const deliveredSuccess = await markAsDelivered();
+
+                if (deliveredSuccess) {
+                    navigation.navigate('EntregaConfirmada', { id });
+                } else {
+                    Alert.alert('Error Parcial', 'Los comprobantes fueron enviados, pero falló la marcación como entregado. Por favor, contacta a soporte.');
+                }
+            } else {
+                Alert.alert('Error', 'No se pudieron enviar los comprobantes de pago. La entrega no fue confirmada.');
+            }
+        } catch (error) {
+            console.error('Error during confirmation process:', error);
+            Alert.alert('Error', 'Ocurrió un error inesperado durante la confirmación.');
+        } finally {
+            setIsLoading(false);
+        }
+    };
+
+    /**
+     * Handles the file selection process.
+     * @async
+     * @param {string} type - Type of proof image ('cash' or 'digital')
+     */
+    const handleFilePick = async (type) => {
+        // Pedir permiso para galería
+        const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+        if (status !== 'granted') {
+            Alert.alert('Permiso denegado', 'Se necesita permiso para acceder a las imágenes.');
+            return;
+        }
+        // Abrir selector de imágenes (sin recorte)
+        const result = await ImagePicker.launchImageLibraryAsync({
+            mediaTypes: ImagePicker.MediaTypeOptions.Images,
+            quality: 0.8,
+        });
+        if (!result.canceled && result.assets?.length) {
+            const asset = result.assets[0];
+            const uri = asset.uri;
+            const name = asset.fileName || uri.split('/').pop();
+            const ext = name.split('.').pop() || 'jpg';
+            const fileData = {
+                uri,
+                name,
+                mimeType: `image/${ext}`,
+            };
+            
+            if (type === 'cash') {
+                setCashProofImage(fileData);
+            } else if (type === 'digital') {
+                setDigitalProofImage(fileData);
+            }
+        } else {
+            console.log('Selección de imagen cancelada');
+            if (type === 'cash') {
+                setCashProofImage(null);
+            } else if (type === 'digital') {
+                setDigitalProofImage(null);
+            }
         }
     };
 
     return (
         <Layout style={[styles.container, { paddingTop: insets.top }]}>
             <TopNavigation
-                title={`Pago en Efectivo del Pedido #${orderInfo?.ID_pedido || id}`}
+                title={`Pago Mixto del Pedido #${orderInfo?.ID_pedido || id}`}
                 alignment="center"
                 accessoryLeft={() => renderBackAction(navigation)}
             />
-            <ScrollView 
-                style={styles.scrollView} 
-                contentContainerStyle={styles.contentContainer}
-            >
+            <ScrollView style={styles.contentContainer} contentContainerStyle={styles.scrollContent}>
                 <Card style={styles.information}>
                     <View style={styles.header}>
                         <FontAwesome5 name="money-check-alt" size={20} color="#7380EC" />
@@ -170,7 +284,7 @@ function PagoMixto({ navigation, route }) {
                 
                 <Card style={styles.information}>
                     <View style={styles.header}>
-                                                <FontAwesome5 name="file-invoice" size={20} color="#7380EC" />
+                        <FontAwesome5 name="file-invoice" size={20} color="#7380EC" />
                         <Text category="h6" style={styles.cardTitle}>Comprobante pago en efectivo</Text>
                     </View>
                     <Text style={styles.instructionText}>
@@ -179,26 +293,26 @@ function PagoMixto({ navigation, route }) {
                     <Input
                         style={styles.inputField}
                         placeholder="Monto recibido en efectivo"
-                        value={cashAmount}
-                        onChangeText={setCashAmount}
+                        value={efectivo}
+                        onChangeText={setEfectivo}
                         keyboardType="numeric"
                     />
                     <Button
                         style={[styles.customButton, styles.uploadButton]}
                         accessoryLeft={(props) => <Icon {...props} name="upload-outline" />}
-                        onPress={handleFilePick} // Attach file picker function
+                        onPress={() => handleFilePick('cash')}
+                        disabled={isLoading}
                     >
                         Seleccionar archivo (Efectivo)
                     </Button>
-                    {/* Display selected file name */}
-                    {selectedFile && (
+                    {cashProofImage && (
                         <Text style={styles.fileNameText} numberOfLines={1} ellipsizeMode="middle">
-                            Archivo: {selectedFile.name}
+                            Archivo: {cashProofImage.name}
                         </Text>
                     )}
                     
                     <View style={[styles.header, { marginTop: 16 }]}>
-                                                <FontAwesome5 name="file-invoice" size={20} color="#7380EC" />
+                        <FontAwesome5 name="file-invoice" size={20} color="#7380EC" />
                         <Text category="h6" style={styles.cardTitle}>Comprobante pago digital</Text>
                     </View>
                     <Text style={styles.instructionText}>
@@ -207,30 +321,30 @@ function PagoMixto({ navigation, route }) {
                     <Input
                         style={styles.inputField}
                         placeholder="Monto recibido digitalmente"
-                        value={digitalAmount}
-                        onChangeText={setDigitalAmount}
+                        value={digital}
+                        onChangeText={setDigital}
                         keyboardType="numeric"
                     />
                     <Button
                         style={[styles.customButton, styles.uploadButton]}
                         accessoryLeft={(props) => <Icon {...props} name="upload-outline" />}
-                        onPress={handleFilePick} // Attach file picker function
+                        onPress={() => handleFilePick('digital')}
+                        disabled={isLoading}
                     >
                         Seleccionar archivo (Digital)
                     </Button>
-                    {/* Display selected file name */}
-                    {selectedFile && (
+                    {digitalProofImage && (
                         <Text style={styles.fileNameText} numberOfLines={1} ellipsizeMode="middle">
-                            Archivo: {selectedFile.name}
+                            Archivo: {digitalProofImage.name}
                         </Text>
                     )}
                     <Button
                         style={[styles.customButton, styles.cashButton, { marginTop: 16 }]} 
-                        // Use ConfirmIcon
                         accessoryLeft={ConfirmIcon}
-                        onPress={handleDetailsClickEfectivo}
+                        onPress={handleConfirmDelivery}
+                        disabled={isLoading}
                     >
-                        Confirmar Entrega
+                        {isLoading ? 'Confirmando...' : 'Confirmar Entrega'}
                     </Button>
                 </Card>
             </ScrollView>
@@ -243,14 +357,12 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f9fafb',
     },
-    // Add style for ScrollView itself if needed (e.g., flex: 1)
-    scrollView: {
+    contentContainer: {
         flex: 1,
     },
-    // contentContainer style is now applied to ScrollView's contentContainerStyle
-    contentContainer: {
+    scrollContent: {
         padding: 16,
-        paddingBottom: 32, // Add padding at the bottom for better scrolling
+        paddingBottom: 24,
     },
     information: {
         marginBottom: 20,

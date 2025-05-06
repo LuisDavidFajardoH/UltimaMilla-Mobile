@@ -37,7 +37,7 @@ const NoAsignado = ({ navigation }) => {
         setPedidos(pedidos.filter(p => p.id_pedido !== orderId));
         Alert.alert('Éxito', 'Pedido marcado como en espera');
         // Optionally navigate back or refresh the screen
-        navigation.navigate('MenuConductor', { refresh: true });
+        navigation.navigate('ConductorDashboard', { refresh: true });
       } else {
         throw new Error('Error al actualizar el estado del pedido');
       }
