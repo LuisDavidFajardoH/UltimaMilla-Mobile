@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { Layout, Text, Card, Button, Spinner, Icon, TopNavigation, TopNavigationAction, Toggle } from '@ui-kitten/components';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { authService } from '../../services/authService';
+import axios from 'axios';
+import * as Location from 'expo-location';
 
 const StatCard = ({ title, value, status, iconName, subvalue, onPress }) => (
   <Card style={styles.earningCard} onPress={onPress}>
@@ -48,7 +50,7 @@ const EarningCard = ({ value }) => (
   </Card>
 );
 
-const StatusSwitch = ({ isActive, onToggle }) => (
+const StatusSwitch = ({ isActive, onToggle, isLoading }) => (
   <Card style={styles.statusCard}>
     <Layout style={styles.statusCardContent}>
       <Text category='s1' style={styles.statusTitle}>Tablero de control</Text>
@@ -60,6 +62,7 @@ const StatusSwitch = ({ isActive, onToggle }) => (
           checked={isActive}
           onChange={onToggle}
           status={isActive ? 'success' : 'danger'}
+          disabled={isLoading}
         />
       </Layout>
     </Layout>
@@ -81,6 +84,8 @@ export const TableroConductorScreen = ({ navigation }) => {
   const [data, setData] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [isActive, setIsActive] = useState(false);
+  const [userLocation, setUserLocation] = useState(null);
+  const [toggleLoading, setToggleLoading] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
@@ -112,12 +117,160 @@ export const TableroConductorScreen = ({ navigation }) => {
 
   useEffect(() => {
     fetchDashboardData();
+    requestLocationPermissions();
   }, []);
+
+  const requestLocationPermissions = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permiso denegado', 'Se necesitan permisos de ubicación para utilizar la app como conductor');
+        return;
+      }
+      getUserLocation();
+    } catch (error) {
+      console.error('Error al solicitar permisos de ubicación:', error);
+    }
+  };
+
+  const getUserLocation = async () => {
+    try {
+      const location = await Location.getCurrentPositionAsync({
+        accuracy: Location.Accuracy.High,
+      });
+      const currentLocation = {
+        latitude: location.coords.latitude,
+        longitude: location.coords.longitude
+      };
+      setUserLocation(currentLocation);
+      console.log('Ubicación obtenida:', currentLocation);
+    } catch (error) {
+      console.error('Error al obtener la ubicación:', error);
+    }
+  };
+
+  const updateLocationOnServer = async (location) => {
+    if (!location) return;
+    
+    try {
+      const userData = await authService.getUserData();
+      if (!userData?.id || !userData?.token) {
+        console.error('No se encontraron datos del usuario');
+        return;
+      }
+      
+      const url = `https://api.99envios.app/api/repartidores-crud/${userData.id}`;
+      
+      const formData = new FormData();
+      formData.append('ubicacion', `${location.latitude},${location.longitude}`);
+      
+      // DEBUG: log each key/value being sent
+      for (let [key, value] of formData.entries()) {
+        console.debug('updateLocationOnServer sending:', key, value);
+      }
+      
+      const response = await axios.post(url, formData, {
+        headers: {
+          'Authorization': `Bearer ${userData.token}`,
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      
+      console.log('Ubicación actualizada en el servidor:', location);
+      return response;
+    } catch (error) {
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    if (userLocation && isActive) {
+      updateLocationOnServer(userLocation);
+    }
+  }, [userLocation, isActive]);
+
+  useEffect(() => {
+    let intervalId = null;
+    
+    getUserLocation();
+    
+    if (isActive) {
+      intervalId = setInterval(getUserLocation, 15 * 60 * 1000);
+    }
+    
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+  }, [isActive]);
+
+  const toggleAvailability = async () => {
+    const newState = !isActive;
+    setIsActive(newState);
+    setToggleLoading(true);
+    
+    try {
+      let currentLocation = userLocation;
+      if (newState && !currentLocation) {
+        try {
+          await getUserLocation();
+          currentLocation = userLocation;
+        } catch (locErr) {
+          console.error('Error al obtener la ubicación:', locErr);
+        }
+      }
+      
+      const userData = await authService.getUserData();
+      if (!userData?.id || !userData?.token) {
+        Alert.alert('Error', 'No se encontraron datos del usuario');
+        setToggleLoading(false);
+        setIsActive(!newState);
+        return;
+      }
+      
+      const locationString = currentLocation ? `${currentLocation.latitude},${currentLocation.longitude}` : null;
+      
+      const formData = new FormData();
+      formData.append('estado', newState ? 1 : 0);
+      if (locationString) {
+        formData.append('ubicacion', locationString);
+      }
+      
+      // DEBUG: log each key/value being sent
+      for (let [key, value] of formData.entries()) {
+        console.debug('toggleAvailability sending:', key, value);
+      }
+      
+      const url = `https://api.99envios.app/api/repartidores-crud/${userData.id}`;
+      
+      const response = await axios.post(url, formData, {
+        headers: {
+          'Authorization': `Bearer ${userData.token}`,
+          'Content-Type': 'multipart/form-data',
+        }
+      });
+      
+      console.log('Estado actualizado:', response.data);
+      Alert.alert(
+        'Estado actualizado', 
+        response.data.message || 
+        (newState ? 'Ahora estás disponible para recibir pedidos' : 'Has pasado a estado no disponible')
+      );
+    } catch (error) {
+      console.error('Error al actualizar el estado:', error);
+      Alert.alert('Error', 'No se pudo actualizar tu estado de disponibilidad');
+      setIsActive(!newState);
+    } finally {
+      setToggleLoading(false);
+    }
+  };
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true);
     fetchDashboardData();
-  }, []);
+    if (isActive) {
+      getUserLocation();
+    }
+  }, [isActive]);
 
   const calculateStats = () => {
     if (!data?.estados_pedido) return { totals: {}, earnings: 0 };
@@ -184,7 +337,8 @@ export const TableroConductorScreen = ({ navigation }) => {
       >
         <StatusSwitch 
           isActive={isActive}
-          onToggle={nextValue => setIsActive(nextValue)}
+          onToggle={toggleAvailability}
+          isLoading={toggleLoading}
         />
         <EarningCard value={earnings} />
         <Layout style={styles.statsContainer}>
@@ -247,49 +401,49 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   statCard: {
-    width: '100%', // Ocupa el 100% del ancho para una sola columna
-    marginBottom: 8, // Espaciado entre tarjetas
+    width: '100%',
+    marginBottom: 8,
     borderRadius: 12,
     minHeight: 140,
   },
   statCardContent: {
-    flexDirection: 'column', // Cambia a diseño en columna
-    alignItems: 'flex-start', // Alinea los elementos al inicio
+    flexDirection: 'column',
+    alignItems: 'flex-start',
     backgroundColor: 'transparent',
-    padding: 12, // Espaciado interno
+    padding: 12,
   },
   statIconTitleContainer: {
-    flexDirection: 'row', // Mantiene el ícono y el título en una fila
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: 8, // Espaciado interno
+    padding: 8,
     borderRadius: 16,
     backgroundColor: 'rgba(0, 149, 255, 0.1)',
-    marginRight: 12, // Espaciado entre el contenedor del ícono/título y los demás elementos
+    marginRight: 12,
   },
   statIcon: {
     width: 24,
     height: 24,
-    marginRight: 8, // Espaciado entre el ícono y el título
+    marginRight: 8,
   },
   statTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    textAlign: 'left', // Alinea el texto a la izquierda
+    textAlign: 'left',
   },
   statValue: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#2E3A59',
-    marginLeft: 12, // Espaciado entre el valor y el contenedor del ícono/título
+    marginLeft: 12,
   },
   statSubValue: {
     fontSize: 14,
     color: '#8F9BB3',
-    marginTop: 4, // Espaciado entre el subvalor y el valor principal
+    marginTop: 4,
   },
   detailsButton: {
-    alignSelf: 'flex-start', // Alinea el botón al inicio horizontalmente
-    marginTop: 12, // Espaciado entre el botón y los demás elementos
+    alignSelf: 'flex-start',
+    marginTop: 12,
     fontSize: 12,
   },
   loadingContainer: {
@@ -318,7 +472,7 @@ const styles = StyleSheet.create({
     color: '#FF3D71',
   },
   statsContainer: {
-    flexDirection: 'column', // Cambia a diseño en columna
+    flexDirection: 'column',
     backgroundColor: 'transparent',
   },
   earningCard: {
